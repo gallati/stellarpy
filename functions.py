@@ -114,7 +114,7 @@ def dLdr_rad(r, P, T):
     """
     epsilon1, X1, X2, nu, ciclo = calculo_tabla1(T)
     Cl = 0.01845*epsilon1*X1*X2*(10**nu)*mu**2
-    return Cl * ((P*r)**2) * (T**(nu-2))
+    return Cl * ((P*r)**2) * (T**(nu-2)), ciclo
 
 def dTdr_rad(r, P, T, L):
     """
@@ -193,6 +193,12 @@ def T_inicial_centro(r):
 
 def P_inicial_centro(r, T):
     return K*T**2.5
+
+
+# Constante del polítropo
+
+def politropo(P_dado, T_dado)
+    return P_dado/(T_dado**2.5)
 
 
 
@@ -278,14 +284,14 @@ def paso6(modelo, derivadas, P_dado, T_dado, L_dado, h, i):
     # Calculamos fL en la capa i+1 (P, T y L se dan en la capa i+1)
 
     r = modelo["r"][i] + h     # r en la capa i+1
-    fL = dLdr_rad(r,P_dado,T_dado)       # fL en la capa i+1
+    fL, ciclo = dLdr_rad(r,P_dado,T_dado)       # fL en la capa i+1
 
     # Calculamos L en la capa i+1
     AL1 = h * (fL - derivadas["fL"][i])                            # AL1 en la capa i+1
     AL2 = h * (fL - 2*derivadas["fL"][i] + derivadas["fL"][i-1])   # AL2 en la capa i+1
     L_cal = L_dado + h*fL - AL1/2  - AL2/12                        # L calculado en la capa i+1
 
-    return L_cal, fL
+    return L_cal, fL, ciclo
 
 
 ############################### Paso 7 ###############################
@@ -317,6 +323,18 @@ def paso8(T_cal, T_est):
     Error_relativo_maximo = 0.0001
     
     return abs(T_cal-T_est)/abs(T_cal) < Error_relativo_maximo
+
+
+############################### Paso 9 ###############################
+
+def paso9(P_dado, T_dado, fP_dado, fT_dado):
+    return T_dado*fP_dado/(P_dado*fT_dado)
+
+
+############################### Paso 10 ###############################
+
+def paso10(n1):
+    return n1 <= 2.5
 
 
 ############################### Paso X ###############################
