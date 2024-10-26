@@ -14,7 +14,7 @@ import numpy as np
 Mtot = 5.0
 Rtot = 11.5
 Ltot = 70.0
-Tc = 2.0
+Tc = 1.95
 X = 0.75
 Y = 0.22
 Z = 1 - X - Y

@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
 from functions import *
 
 # Configuración de los DataFrame
@@ -271,37 +271,6 @@ while loop1:
 
 
 ######################################################################
-################### Cálculo de n+1 (interpolación) ###################
-######################################################################
-
-# Calculamos para qué i se ha calculado el último n+1 válido y añadimos el de i+1
-while True:
-    if modelo.loc[i, "n+1"] != "-":
-        break
-    else:
-        i -= 1
-modelo.loc[i+1, "n+1"] = n1
-
-# Determinamos para qué radio se produce la transición radiativo/convectivo
-R_conv = modelo.loc[i, "r"]
-
-# Calculamos la interpolación para n+1 = 2.5
-# interpolacion = modelo.loc[i:i+1, "r":"n+1"].reset_index()
-
-# r_interpolador = interp1d(interpolacion["n+1"], interpolacion["r"], kind='linear', fill_value="extrapolate")
-# P_interpolador = interp1d(interpolacion["n+1"], interpolacion["P"], kind='linear', fill_value="extrapolate")
-# T_interpolador = interp1d(interpolacion["n+1"], interpolacion["T"], kind='linear', fill_value="extrapolate")
-# L_interpolador = interp1d(interpolacion["n+1"], interpolacion["L"], kind='linear', fill_value="extrapolate")
-# M_interpolador = interp1d(interpolacion["n+1"], interpolacion["M"], kind='linear', fill_value="extrapolate")
-
-# r = r_interpolador(2.5)
-# P = P_interpolador(2.5)
-# T = T_interpolador(2.5)
-# L = L_interpolador(2.5)
-# M = M_interpolador(2.5)
-
-
-######################################################################
 #################### Primeras tres capas (centro) ####################
 ######################################################################
 
@@ -402,3 +371,15 @@ while loop1:
 # calculamos el error relativo total
 
 print(err_rel_total(rad, conv))
+
+# scatter plot
+modelo.plot(kind="line",
+        x="r",
+        y="L",
+        color='red')
+
+# set the title
+plt.title('ScatterPlot')
+
+# show the plot
+plt.show()
