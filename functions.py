@@ -306,6 +306,26 @@ def paso6(modelo, derivadas, P_dado, T_dado, L_dado, h, i):
     return L_cal, fL, ciclo
 
 
+############################### Paso 6X ###############################
+
+def paso6X(modelo, derivadas, P_dado, T_dado, L_dado, h, i):
+    """
+    Función igual a paso6 salvo por la definición de AL2
+    Debe usarse al usar indexación con paso negativo.
+    """
+    # Calculamos fL en la capa i+1 (P, T y L se dan en la capa i+1)
+
+    r = modelo["r"][i] + h     # r en la capa i+1
+    fL, ciclo = dLdr_rad(r,P_dado,T_dado)       # fL en la capa i+1
+
+    # Calculamos L en la capa i+1
+    AL1 = h * (fL - derivadas["fL"][i])                            # AL1 en la capa i+1
+    AL2 = h * (fL - 2*derivadas["fL"][i] + derivadas["fL"][i+1])   # AL2 en la capa i+1
+    L_cal = L_dado + h*fL - AL1/2  - AL2/12                        # L calculado en la capa i+1
+
+    return L_cal, fL, ciclo
+
+
 ############################### Paso 7 ###############################
 
 def paso7(modelo, derivadas, P_dado, T_dado, L_dado, h, i):
@@ -379,3 +399,14 @@ def pasoX(x_cal, x_est):
     
     return abs(x_cal-x_est)/abs(x_cal) < Error_relativo_maximo
 
+
+######################################################################
+######################## Error relativo total ########################
+######################################################################
+
+def err_rel_total(X_rad, X_conv):
+    """
+    Devuelve el error relativo total para dos arrays (X_rad, X_conv)
+    Cada array contiene el valor de P, T, L, M
+    """
+    return (sum(((X_rad - X_conv)/X_rad)**2))**0.5

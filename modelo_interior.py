@@ -5,7 +5,7 @@ from functions import *
 
 # Configuración de los DataFrame
 
-pd.set_option('colheader_justify', 'center', "display.precision", 6, 'display.max_rows', 1000)
+pd.set_option('colheader_justify', 'center', "display.precision", 9, 'display.max_rows', 1000)
 modelo = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "n+1"])
 derivadas = pd.DataFrame(data = [], columns=["fP", "fT", "fL", "fM"])
 
@@ -308,7 +308,7 @@ R_conv = modelo.loc[i, "r"]
 # Para el cálculo de las capas centrales, sobreescribimos los valores del modelo
 
 h = Rini/100   # Redefinimos el paso
-r = 0.0        # Integramos desde r = 0.0
+r = 1e-24      # Integramos desde r = 0.0
 
 # Iteramos desde i = 100 hasta i = 98 (incluido)
 for i in range(len(modelo)-1, len(modelo)-4, -1):
@@ -370,8 +370,8 @@ while loop1:
     # Aplicamos el cálculo de P con la constante del politropo K
     P_cal = politropo(K, T_cal)
 
-    # Aplicamos el paso 6
-    L_cal, fL, ciclo = paso6(modelo, derivadas, P_cal, T_cal, modelo["L"][i], h, i)
+    # Aplicamos el paso 6 (con una modificación por usar paso negativo)
+    L_cal, fL, ciclo = paso6X(modelo, derivadas, P_cal, T_cal, modelo["L"][i], h, i)
 
     # Calculamos el radio y fP
     r = modelo["r"][i] + h
@@ -380,32 +380,25 @@ while loop1:
     # Detenemos el bucle al llegar al valor de r donde se detiene la convección
     if modelo["fase"][i-1] != "CONVEC":
         loop1 = False
-        # Almacenamos los datos que da la integración desde el centro para la fase sigueinte
-        conv = np.array([r, P_cal, T_cal, L_cal, M_cal], dtype=float)
+
+        # Almacenamos los datos que da la integración desde el centro y desde la superficie
+        rad = np.array(modelo.loc[i-1, "P":"M"].to_list(), dtype=float)
+        conv = np.array([P_cal, T_cal, L_cal, M_cal], dtype=float)
 
     else:
         # Añadimos las variables calculadas al modelo
-        modelo.loc[i-1] = {"E":ciclo, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "n+1":"mod"}
+        modelo.loc[i-1] = {"E":ciclo, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "n+1":"-"}
         derivadas.loc[i-1] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
 
         # Calculamos la siguiente capa
         i -= 1
 
-print(modelo)
-print(conv)
 
-# ######################################################################
-# ######################## Error relativo total ########################
-# ######################################################################
+######################################################################
+################## Cálculo del error relativo total ##################
+######################################################################
 
-# # rad = np.array(modelo.loc[i, "r":"M"].to_list(), dtype=float)
-# # conv = np.array(modelo_c.loc[len(modelo_c)-1, "r":"M"].to_list(), dtype=float)
+# A partir de los datos que da la integración desde el centro y desde la superficie
+# calculamos el error relativo total
 
-# # def err_function(X_rad, X_conv):
-# #     return ((X_rad - X_conv)/X_rad)**2
-
-# # err_rel_total = np.sqrt(sum(err_function(rad, conv)))
-
-# # print(f"{err_rel_total*100:.2f} %")
-
-# # print(modelo)
+print(err_rel_total(rad, conv))
