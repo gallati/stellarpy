@@ -4,7 +4,7 @@ from functions import *
 
 # Configuración de los DataFrame
 
-pd.set_option('colheader_justify', 'center', "display.precision", 7, 'display.max_rows', 100)
+pd.set_option('colheader_justify', 'center', "display.precision", 6, 'display.max_rows', 1000)
 modelo = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "n+1"])
 derivadas = pd.DataFrame(data = [], columns=["fP", "fT", "fL", "fM"])
 
@@ -201,6 +201,7 @@ while loop1:
     # Comparamos n+1 con 2.5
     if paso10(n1):
         loop1 = False
+        K = K_pol(P_cal, T_cal)   # Cálculo de K en la capa i+1
     else:
         # Añadimos las variables calculadas al modelo
         r = modelo["r"][i] + h
@@ -210,4 +211,61 @@ while loop1:
         # Calculamos la siguiente capa
         i += 1
 
+
+######################################################################
+############################# Fase A.2. ##############################
+######################################################################
+
+fase = "CONVEC"                             # Fase actual ("CONVEC")
+
+loop1 = True
+
+while loop1:
+
+    # Aplicamos el paso 2 bis
+    _, T_est = paso2(modelo, derivadas, h, i)
+
+    loop2 = True
+
+    while loop2:
+
+        # Aplicamos el cálculo de P con la constante del politropo K
+        P_est = politropo(K, T_est)
+
+        # Aplicamos el paso 3
+        M_cal, fM = paso3(modelo, derivadas, P_est, T_est, modelo["M"][i], h, i)
+
+        # Aplicamos el paso 7 bis
+        if modelo["r"][i] + h < 1e-6:  # Tomamos como 0 valores muy pequeños
+            T_cal = T_est
+        elif modelo["r"][i] + h > 0.0:
+            T_cal, fT = paso7bis(modelo, derivadas, M_cal, h, i)
+
+        # Aplicamos el paso 8
+        if pasoX(T_cal, T_est):
+            loop2 = False
+        else:
+            T_est = T_cal
+
+    # Aplicamos el cálculo de P con la constante del politropo K
+    P_cal = politropo(K, T_cal)
+
+    # Aplicamos el paso 6
+    L_cal, fL, ciclo = paso6(modelo, derivadas, P_cal, T_cal, modelo["L"][i], h, i)
+
+    # Añadimos las variables calculadas al modelo
+    r = modelo["r"][i] + h
+    fP = dPdr_conv(r, T_cal, M_cal, K)
+    modelo.loc[len(modelo)] = {"E":ciclo, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "n+1":"-"}
+    derivadas.loc[len(derivadas)] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
+
+    # Comparamos r en i+1 con 0.0 (valores muy pequeños)
+    if not modelo["r"][i] + h > 1e-6:
+        loop1 = False
+    else:
+        # Calculamos la siguiente capa
+        i += 1
+
+
+modelo["r"][100] = 0.0
 print(modelo)

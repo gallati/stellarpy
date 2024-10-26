@@ -45,45 +45,41 @@ def rho(P, T):
     """
     return (mu/R)*(P/T)
 
-def epsilon(P, T):
+def epsilon(P, T, row):
     """
-    Ecuación (9)
+    Ecuación (9) para DataFrames
     """
+    ciclo, _, _, log10epsilon1, nu = row.to_list()
 
-    # Calculamos los valores de epsilon1, X1, X2 y nu según la temperatura
-    epsilon1, X1, X2, nu, ciclo = calculo_tabla1(T)
+    if ciclo == "pp":
+            X1, X2 = X, X
+    elif ciclo == "CN":
+            X1, X2 = X, Z/3
 
-    # Devolvemos el valor correspondiente junto con el ciclo que lo produce (valores de T están en unidades del modelo)
-    return (epsilon1*X1*X2*rho(P, T)*(T/10)**nu, ciclo)
+    return (10**log10epsilon1)*X1*X2*rho(P, T)*(T*10)**nu, X1, X2
 
-def calculo_tabla1(T):
+def calculo_tabla1(P, T):
     """
-    Dada una temperatura T, devuelve los valores de epsilon1, X1, X2 y nu
-    junto con el ciclo que genera la energía.
+    Dada una presión P y temperatura T  devuelve los valores de 
+    epsilon1, X1, X2 y nu junto con el ciclo que genera la energía.
     """
-
     # Aplicamos un filtro al DataFrame de la Tabla 1
     filtro = (epsilon_df["Tmin"] <= T) & (T < epsilon_df["Tmax"])
-    epsilon_values = epsilon_df[filtro]
+    epsilon_values = epsilon_df[filtro].reset_index(drop=True)
 
     # Si el DataFrame está vacío, devolvemos 0.0
     if epsilon_values.empty:
         return (0.0, 0.0, 0.0, 0.0, "--")
     
-    # Si el DataFrame no está vacío, devolvemos para el mayor epsilon1
+    # En caso contrario, tomamos el ciclo que genere mayor energía
     else:
-        # Tomamos el índice de la fila para el que log10(epsilon1) es mayor y extraemos sus elementos
-        index = epsilon_values["log10(epsilon1)"].idxmax()
-        ciclo, _, _, log_epsilon1, nu = epsilon_values.loc[index].to_list()
-
-        # Calculamos X1 o X2 según el ciclo
-        if ciclo == "pp":
-            X1, X2 = X, X
-        elif ciclo == "CN":
-            X1, X2 = X, Z/3
-
+        # Calculamos el valor de epsilon, X1 y X2 para cada fila
+        epsilon_values[["epsilon", "X1", "X2"]] = epsilon_values.apply(lambda row: epsilon(P, T, row), axis=1, result_type='expand')
+        # Tomamos el índice de la fila para el que epsilon es mayor y extraemos sus elementos
+        index = epsilon_values["epsilon"].idxmax()
+        ciclo, _, _, log10epsilon1, nu, _, X1, X2 = epsilon_values.loc[index].to_list()
         # Devolvemos los valores de epsilon1, X1, X2, nu y el ciclo que lo genera
-        return 10**log_epsilon1, X1, X2, nu, ciclo
+        return 10**log10epsilon1, X1, X2, nu, ciclo
 
 
 
@@ -112,7 +108,7 @@ def dLdr_rad(r, P, T):
     """
     Ecuación (20)
     """
-    epsilon1, X1, X2, nu, ciclo = calculo_tabla1(T)
+    epsilon1, X1, X2, nu, ciclo = calculo_tabla1(P, T)
     Cl = 0.01845*epsilon1*X1*X2*(10**nu)*mu**2
     return Cl * ((P*r)**2) * (T**(nu-2)), ciclo
 
@@ -126,26 +122,27 @@ def dTdr_rad(r, P, T, L):
 
 # Caso convectivo
 
-def dMdr_conv(r, T):
+def dMdr_conv(r, T, K):
     """
     Ecuación (22)
     """
     Cm = 0.01523*mu
     return Cm * K*(T**1.5)*r**2
 
-def dPdr_conv(r, T, M):
+def dPdr_conv(r, T, M, K):
     """
     Ecuación (23)
     """
     Cp = 8.084*mu
     return -Cp * K*(T**1.5)*M / (r**2)
 
-def dLdr_conv(r, T):
+def dLdr_conv(r, P, T, K):
     """
     Ecuación (24)
     """
+    epsilon1, X1, X2, nu, ciclo = calculo_tabla1(P, T)
     Cl = 0.01845*epsilon1*X1*X2*(10**nu)*mu**2
-    return Cl * (K**2)*(T**(3+nu))*r**2
+    return Cl * (K**2)*(T**(3+nu))*r**2, ciclo
 
 def dTdr_conv(r, M):
     """
@@ -182,24 +179,27 @@ def P_inicial_superficie(r, T):
 
 # Valores iniciales en el centro
 
-def M_inicial_centro(r, T):
+def M_inicial_centro(r, T, K):
     return 0.005077*mu*K*(T**1.5)*r**3
 
-def L_inicial_centro(r):
-    return 0.006150*epsilon1*X1*X2*(10**nu)*(mu**2)*(K**2)*(Tc**(3+nu))*(r**3)
+def L_inicial_centro(r, P, T, K):
+    epsilon1, X1, X2, nu, ciclo = calculo_tabla1(P, T)
+    return 0.006150*epsilon1*X1*X2*(10**nu)*(mu**2)*(K**2)*(Tc**(3+nu))*(r**3), ciclo
 
-def T_inicial_centro(r):
+def T_inicial_centro(r, K):
     return Tc - 0.008207*(mu**2)*K*(Tc**1.5)*(r**2)
 
-def P_inicial_centro(r, T):
+def P_inicial_centro(r, T, K):
     return K*T**2.5
 
 
 # Constante del polítropo
 
-def politropo(P_dado, T_dado)
+def K_pol(P_dado, T_dado):
     return P_dado/(T_dado**2.5)
 
+def politropo(K, T_dado):
+    return K*(T_dado**2.5)
 
 
 ######################################################################
@@ -302,6 +302,26 @@ def paso7(modelo, derivadas, P_dado, T_dado, L_dado, h, i):
 
     r = modelo["r"][i] + h     # r en la capa i+1
     fT = dTdr_rad(r, P_dado, T_dado, L_dado)  # fT en la capa i+1
+
+
+    # Calculamos T en la capa i+1
+
+    T = modelo["T"][i]                   # T en la capa i
+    AT1 = h * (fT - derivadas["fT"][i])  # AT1 en la capa i+1
+
+    T_cal = T + h*fT - AT1/2            # T calculado en la capa i+1
+
+    return T_cal, fT
+
+
+############################# Paso 7 bis #############################
+
+def paso7bis(modelo, derivadas, M_dado, h, i):
+    
+    # Calculamos fT en la capa i+1 (M se da en la capa i+1)
+
+    r = modelo["r"][i] + h     # r en la capa i+1
+    fT = dTdr_conv(r, M_dado)  # fT en la capa i+1
 
 
     # Calculamos T en la capa i+1
