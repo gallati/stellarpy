@@ -282,6 +282,9 @@ while True:
         i -= 1
 modelo.loc[i+1, "n+1"] = n1
 
+# Determinamos para qué radio se produce la transición radiativo/convectivo
+R_conv = modelo.loc[i, "r"]
+
 # Calculamos la interpolación para n+1 = 2.5
 # interpolacion = modelo.loc[i:i+1, "r":"n+1"].reset_index()
 
@@ -302,31 +305,31 @@ modelo.loc[i+1, "n+1"] = n1
 #################### Primeras tres capas (centro) ####################
 ######################################################################
 
-modelo_c = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "n+1"])
-derivadas_c = pd.DataFrame(data = [], columns=["fP", "fT", "fL", "fM"])
+# Para el cálculo de las capas centrales, sobreescribimos los valores del modelo
 
-h = Rini/100
-r = 0.0
-T = Tc
+h = Rini/100   # Redefinimos el paso
+r = 0.0        # Integramos desde r = 0.0
 
-for j in range(3):
+# Iteramos desde i = 100 hasta i = 98 (incluido)
+for i in range(len(modelo)-1, len(modelo)-4, -1):
 
     # Calculamos y almacenamos los valores del modelo
     T = T_inicial_centro(r, K)
     P = P_inicial_centro(r, T, K)
     M = M_inicial_centro(r, T, K)
     L, _ = L_inicial_centro(r, P, T, K)
-    modelo_c.loc[len(modelo_c)] = {"E":"--", "fase":"CENTRO", "r":r, "P":P, "T":T, "L":L, "M":M, "n+1":"-"}
+    modelo.loc[i] = {"E":"--", "fase":"CENTRO", "r":r, "P":P, "T":T, "L":L, "M":M, "n+1":"-"}
 
     # Calculamos y almacenamos los valores de las f_i (derivadas)
     fT = dTdr_conv(r, M)
     fP = dPdr_conv(r, T, M, K)
     fM = dMdr_conv(r, T, K)
     fL, _ = dLdr_conv(r, P, T, K)
-    derivadas_c.loc[len(derivadas_c)] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
+    derivadas.loc[i] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
 
     # Aumentamos el valor del radio
     r += h
+
 
 
 ######################################################################
@@ -340,7 +343,7 @@ loop1 = True
 while loop1:
 
     # Aplicamos el paso 2 bis
-    _, T_est = paso2(modelo_c, derivadas_c, h, j)
+    _, T_est = paso2(modelo, derivadas, h, i)
 
     loop2 = True
 
@@ -350,13 +353,13 @@ while loop1:
         P_est = politropo(K, T_est)
 
         # Aplicamos el paso 3
-        M_cal, fM = paso3(modelo_c, derivadas_c, P_est, T_est, modelo_c["M"][j], h, j)
+        M_cal, fM = paso3(modelo, derivadas, P_est, T_est, modelo["M"][i], h, i)
 
         # Aplicamos el paso 7 bis
-        if modelo_c["r"][j] + h < 1e-6:  # Tomamos como 0 valores muy pequeños
+        if modelo["r"][i] + h < 1e-6:  # Tomamos como 0 valores muy pequeños
             T_cal = T_est
-        elif modelo_c["r"][j] + h > 0.0:
-            T_cal, fT = paso7bis(modelo_c, derivadas_c, M_cal, h, j)
+        elif modelo["r"][i] + h > 0.0:
+            T_cal, fT = paso7bis(modelo, derivadas, M_cal, h, i)
 
         # Aplicamos el paso 8
         if pasoX(T_cal, T_est):
@@ -368,34 +371,41 @@ while loop1:
     P_cal = politropo(K, T_cal)
 
     # Aplicamos el paso 6
-    L_cal, fL, ciclo = paso6(modelo_c, derivadas_c, P_cal, T_cal, modelo_c["L"][j], h, j)
+    L_cal, fL, ciclo = paso6(modelo, derivadas, P_cal, T_cal, modelo["L"][i], h, i)
 
-    # Añadimos las variables calculadas al modelo
-    r = modelo_c["r"][j] + h
+    # Calculamos el radio y fP
+    r = modelo["r"][i] + h
     fP = dPdr_conv(r, T_cal, M_cal, K)
-    modelo_c.loc[len(modelo_c)] = {"E":ciclo, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "n+1":"-"}
-    derivadas_c.loc[len(derivadas_c)] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
 
     # Detenemos el bucle al llegar al valor de r donde se detiene la convección
-    if modelo_c["r"][j] + h - modelo["r"][i+1] > 1e-6:
+    if modelo["fase"][i-1] != "CONVEC":
         loop1 = False
+        # Almacenamos los datos que da la integración desde el centro para la fase sigueinte
+        conv = np.array([r, P_cal, T_cal, L_cal, M_cal], dtype=float)
+
     else:
+        # Añadimos las variables calculadas al modelo
+        modelo.loc[i-1] = {"E":ciclo, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "n+1":"mod"}
+        derivadas.loc[i-1] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
+
         # Calculamos la siguiente capa
-        j += 1
-
-
-######################################################################
-######################## Error relativo total ########################
-######################################################################
-
-rad = np.array(modelo.loc[i, "r":"M"].to_list(), dtype=float)
-conv = np.array(modelo_c.loc[len(modelo_c)-1, "r":"M"].to_list(), dtype=float)
-
-def err_function(X_rad, X_conv):
-    return ((X_rad - X_conv)/X_rad)**2
-
-err_rel_total = np.sqrt(sum(err_function(rad, conv)))
-
-print(f"{err_rel_total*100:.2f} %")
+        i -= 1
 
 print(modelo)
+print(conv)
+
+# ######################################################################
+# ######################## Error relativo total ########################
+# ######################################################################
+
+# # rad = np.array(modelo.loc[i, "r":"M"].to_list(), dtype=float)
+# # conv = np.array(modelo_c.loc[len(modelo_c)-1, "r":"M"].to_list(), dtype=float)
+
+# # def err_function(X_rad, X_conv):
+# #     return ((X_rad - X_conv)/X_rad)**2
+
+# # err_rel_total = np.sqrt(sum(err_function(rad, conv)))
+
+# # print(f"{err_rel_total*100:.2f} %")
+
+# # print(modelo)
