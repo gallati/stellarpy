@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy.interpolate import interp1d
 from functions import *
 
 # Configuración de los DataFrame
@@ -10,7 +11,7 @@ derivadas = pd.DataFrame(data = [], columns=["fP", "fT", "fL", "fM"])
 
 
 ######################################################################
-######################## Primeras tres capas #########################
+################## Primeras tres capas (superficie) ##################
 ######################################################################
 
 Rini = 0.9*Rtot
@@ -201,7 +202,8 @@ while loop1:
     # Comparamos n+1 con 2.5
     if paso10(n1):
         loop1 = False
-        K = K_pol(P_cal, T_cal)   # Cálculo de K en la capa i+1
+        K = K_pol(P_cal, T_cal)          # Cálculo de K en la capa i+1 (Fase A.2.)
+        
     else:
         # Añadimos las variables calculadas al modelo
         r = modelo["r"][i] + h
@@ -216,7 +218,7 @@ while loop1:
 ############################# Fase A.2. ##############################
 ######################################################################
 
-fase = "CONVEC"                             # Fase actual ("CONVEC")
+fase = "CONVEC"     # Fase actual ("CONVEC")
 
 loop1 = True
 
@@ -262,10 +264,138 @@ while loop1:
     # Comparamos r en i+1 con 0.0 (valores muy pequeños)
     if not modelo["r"][i] + h > 1e-6:
         loop1 = False
+        modelo.loc[100, "r"] = 0.0
     else:
         # Calculamos la siguiente capa
         i += 1
 
 
-modelo["r"][100] = 0.0
+######################################################################
+################### Cálculo de n+1 (interpolación) ###################
+######################################################################
+
+# Calculamos para qué i se ha calculado el último n+1 válido y añadimos el de i+1
+while True:
+    if modelo.loc[i, "n+1"] != "-":
+        break
+    else:
+        i -= 1
+modelo.loc[i+1, "n+1"] = n1
+
+# Calculamos la interpolación para n+1 = 2.5
+# interpolacion = modelo.loc[i:i+1, "r":"n+1"].reset_index()
+
+# r_interpolador = interp1d(interpolacion["n+1"], interpolacion["r"], kind='linear', fill_value="extrapolate")
+# P_interpolador = interp1d(interpolacion["n+1"], interpolacion["P"], kind='linear', fill_value="extrapolate")
+# T_interpolador = interp1d(interpolacion["n+1"], interpolacion["T"], kind='linear', fill_value="extrapolate")
+# L_interpolador = interp1d(interpolacion["n+1"], interpolacion["L"], kind='linear', fill_value="extrapolate")
+# M_interpolador = interp1d(interpolacion["n+1"], interpolacion["M"], kind='linear', fill_value="extrapolate")
+
+# r = r_interpolador(2.5)
+# P = P_interpolador(2.5)
+# T = T_interpolador(2.5)
+# L = L_interpolador(2.5)
+# M = M_interpolador(2.5)
+
+
+######################################################################
+#################### Primeras tres capas (centro) ####################
+######################################################################
+
+modelo_c = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "n+1"])
+derivadas_c = pd.DataFrame(data = [], columns=["fP", "fT", "fL", "fM"])
+
+h = Rini/100
+r = 0.0
+T = Tc
+
+for j in range(3):
+
+    # Calculamos y almacenamos los valores del modelo
+    T = T_inicial_centro(r, K)
+    P = P_inicial_centro(r, T, K)
+    M = M_inicial_centro(r, T, K)
+    L, _ = L_inicial_centro(r, P, T, K)
+    modelo_c.loc[len(modelo_c)] = {"E":"--", "fase":"CENTRO", "r":r, "P":P, "T":T, "L":L, "M":M, "n+1":"-"}
+
+    # Calculamos y almacenamos los valores de las f_i (derivadas)
+    fT = dTdr_conv(r, M)
+    fP = dPdr_conv(r, T, M, K)
+    fM = dMdr_conv(r, T, K)
+    fL, _ = dLdr_conv(r, P, T, K)
+    derivadas_c.loc[len(derivadas_c)] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
+
+    # Aumentamos el valor del radio
+    r += h
+
+
+######################################################################
+########################## Capas posteriores #########################
+######################################################################
+
+fase = "CONVEC"     # Fase actual ("CONVEC")
+
+loop1 = True
+
+while loop1:
+
+    # Aplicamos el paso 2 bis
+    _, T_est = paso2(modelo_c, derivadas_c, h, j)
+
+    loop2 = True
+
+    while loop2:
+
+        # Aplicamos el cálculo de P con la constante del politropo K
+        P_est = politropo(K, T_est)
+
+        # Aplicamos el paso 3
+        M_cal, fM = paso3(modelo_c, derivadas_c, P_est, T_est, modelo_c["M"][j], h, j)
+
+        # Aplicamos el paso 7 bis
+        if modelo_c["r"][j] + h < 1e-6:  # Tomamos como 0 valores muy pequeños
+            T_cal = T_est
+        elif modelo_c["r"][j] + h > 0.0:
+            T_cal, fT = paso7bis(modelo_c, derivadas_c, M_cal, h, j)
+
+        # Aplicamos el paso 8
+        if pasoX(T_cal, T_est):
+            loop2 = False
+        else:
+            T_est = T_cal
+
+    # Aplicamos el cálculo de P con la constante del politropo K
+    P_cal = politropo(K, T_cal)
+
+    # Aplicamos el paso 6
+    L_cal, fL, ciclo = paso6(modelo_c, derivadas_c, P_cal, T_cal, modelo_c["L"][j], h, j)
+
+    # Añadimos las variables calculadas al modelo
+    r = modelo_c["r"][j] + h
+    fP = dPdr_conv(r, T_cal, M_cal, K)
+    modelo_c.loc[len(modelo_c)] = {"E":ciclo, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "n+1":"-"}
+    derivadas_c.loc[len(derivadas_c)] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
+
+    # Detenemos el bucle al llegar al valor de r donde se detiene la convección
+    if modelo_c["r"][j] + h - modelo["r"][i+1] > 1e-6:
+        loop1 = False
+    else:
+        # Calculamos la siguiente capa
+        j += 1
+
+
+######################################################################
+######################## Error relativo total ########################
+######################################################################
+
+rad = np.array(modelo.loc[i, "r":"M"].to_list(), dtype=float)
+conv = np.array(modelo_c.loc[len(modelo_c)-1, "r":"M"].to_list(), dtype=float)
+
+def err_function(X_rad, X_conv):
+    return ((X_rad - X_conv)/X_rad)**2
+
+err_rel_total = np.sqrt(sum(err_function(rad, conv)))
+
+print(f"{err_rel_total*100:.2f} %")
+
 print(modelo)

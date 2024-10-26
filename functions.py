@@ -180,16 +180,28 @@ def P_inicial_superficie(r, T):
 # Valores iniciales en el centro
 
 def M_inicial_centro(r, T, K):
+    """
+    Ecuación (43)
+    """
     return 0.005077*mu*K*(T**1.5)*r**3
 
 def L_inicial_centro(r, P, T, K):
+    """
+    Ecuación (44)
+    """
     epsilon1, X1, X2, nu, ciclo = calculo_tabla1(P, T)
     return 0.006150*epsilon1*X1*X2*(10**nu)*(mu**2)*(K**2)*(Tc**(3+nu))*(r**3), ciclo
 
 def T_inicial_centro(r, K):
+    """
+    Ecuación (45)
+    """
     return Tc - 0.008207*(mu**2)*K*(Tc**1.5)*(r**2)
 
 def P_inicial_centro(r, T, K):
+    """
+    Ecuación (46)
+    """
     return K*T**2.5
 
 
