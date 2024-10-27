@@ -368,8 +368,43 @@ while loop1:
 # A partir de los datos que da la integración desde el centro y desde la superficie
 # calculamos el error relativo total
 
-print(err_rel_total(rad, conv))
-print(modelo)
+print(f"Error relativo total: {err_rel_total(rad, conv)*100} %")
+
+
+######################################################################
+##################### Añadir capas superficiales #####################
+######################################################################
+
+# Reutilizamos el código del primer apartado
+
+r = Rini + h
+i = -1
+
+while True:
+
+    # Calculamos y almacenamos los valores del modelo
+    T = T_inicial_superficie(r)
+    P = P_inicial_superficie(r, T)
+    M = Mtot
+    L = Ltot
+    modelo.loc[i] = {"E":"--", "fase":"^^^^^^", "r":r, "P":P, "T":T, "L":L, "M":M, "n+1":"-"}
+
+    # Calculamos y almacenamos los valores de las f_i (derivadas)
+    fT = dTdr_rad(r, P, T, L)
+    fP = dPdr_rad(r, P, T, M)
+    fM = 0.0
+    fL = 0.0
+    derivadas.loc[i] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
+
+    # Aumentamos el valor del radio
+    r += h
+    i -= 1
+
+    # Cesamos el bucle al llegar al radio máximo
+    if Rtot - r <= 0.0:
+        break
+
+modelo.sort_index(inplace=True)
 
 
 ######################################################################
@@ -408,9 +443,6 @@ ax4.set_xlabel("r / $10^{10}$ cm")
 ax4.set_ylabel("M / $10^{33}$ g")
 ax4.grid(True)
 
-
 fig.suptitle("Modelo de interior estelar", fontsize=16)
-# plt.tight_layout(rect=[0, 0, 1, 0.96])  # leave space for the suptitle
-
 plt.tight_layout()
 plt.show()
