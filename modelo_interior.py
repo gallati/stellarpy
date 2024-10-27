@@ -274,10 +274,8 @@ while loop1:
 #################### Primeras tres capas (centro) ####################
 ######################################################################
 
-# Para el cálculo de las capas centrales, sobreescribimos los valores del modelo
-
 h = Rini/100   # Redefinimos el paso
-r = 1e-24      # Integramos desde r = 0.0
+r = 0.0      # Integramos desde r = 0.0
 
 # Iteramos desde i = 100 hasta i = 98 (incluido)
 for i in range(len(modelo)-1, len(modelo)-4, -1):
@@ -371,15 +369,48 @@ while loop1:
 # calculamos el error relativo total
 
 print(err_rel_total(rad, conv))
+print(modelo)
 
-# scatter plot
-modelo.plot(kind="line",
-        x="r",
-        y="L",
-        color='red')
 
-# set the title
-plt.title('ScatterPlot')
+######################################################################
+####################### Representación gráfica #######################
+######################################################################
 
-# show the plot
+r = modelo["r"]
+P = modelo["P"]
+T = modelo["T"]
+L = modelo["L"]
+M = modelo["M"]
+
+fig, [[ax1, ax2], [ax3, ax4]] = plt.subplots(nrows=2, ncols=2)
+
+ax1.plot(r, P)
+ax1.set_title("Presión")
+ax1.set_xlabel("r / $10^{10}$ cm")
+ax1.set_ylabel("P / $10^{15}$ din cm$^{-2}$")
+ax1.grid(True)
+
+ax2.plot(r, T)
+ax2.set_title("Temperatura")
+ax2.set_xlabel("r / $10^{10}$ cm")
+ax2.set_ylabel("T / $10^{7}$ K")
+ax2.grid(True)
+
+ax3.plot(r, L)
+ax3.set_title("Luminosidad")
+ax3.set_xlabel("r / $10^{10}$ cm")
+ax3.set_ylabel("L / $10^{33}$ erg s$^{-1}$")
+ax3.grid(True)
+
+ax4.plot(r, M)
+ax4.set_title("Masa")
+ax4.set_xlabel("r / $10^{10}$ cm")
+ax4.set_ylabel("M / $10^{33}$ g")
+ax4.grid(True)
+
+
+fig.suptitle("Modelo de interior estelar", fontsize=16)
+# plt.tight_layout(rect=[0, 0, 1, 0.96])  # leave space for the suptitle
+
+plt.tight_layout()
 plt.show()

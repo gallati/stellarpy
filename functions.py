@@ -10,10 +10,11 @@ import numpy as np
 
 
 # Definición de parámetros constantes
-
+delta_R = 0.57
+delta_L = 5.0
 Mtot = 5.0
-Rtot = 11.5
-Ltot = 70.0
+Rtot = 11.5 - 1*delta_R
+Ltot = 70.0 + 1*delta_L/1.4
 Tc = 1.95
 X = 0.75
 Y = 0.22
@@ -133,8 +134,11 @@ def dPdr_conv(r, T, M, K):
     """
     Ecuación (23)
     """
-    Cp = 8.084*mu
-    return -Cp * K*(T**1.5)*M / (r**2)
+    if r == 0.0:
+        return 0.0
+    else:
+        Cp = 8.084*mu
+        return -Cp * K*(T**1.5)*M / (r**2)
 
 def dLdr_conv(r, P, T, K):
     """
@@ -148,8 +152,11 @@ def dTdr_conv(r, M):
     """
     Ecuación (25)
     """
-    Ct = 3.234*mu
-    return -Ct * M / (r**2)
+    if r == 0.0:
+        return 0.0
+    else:
+        Ct = 3.234*mu
+        return -Ct * M / (r**2)
 
 
 
