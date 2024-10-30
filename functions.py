@@ -43,8 +43,9 @@ epsilon_df = pd.DataFrame(data=[("pp", 0.40, 0.60, -6.84, 6.0),
 def rho(P, T):
     """
     Ecuación (6)
+    Convertimos la presión y la temperatura a las unidades estándar
     """
-    return (mu/R)*(P/T)
+    return (mu/R)*((P*1e15)/(T*1e7))
 
 def epsilon(P, T, row):
     """

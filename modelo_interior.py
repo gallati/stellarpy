@@ -6,7 +6,7 @@ from functions import *
 # Configuración de los DataFrame
 
 pd.set_option('colheader_justify', 'center', "display.precision", 9, 'display.max_rows', 1000)
-modelo = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "n+1"])
+modelo = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "n+1"])
 derivadas = pd.DataFrame(data = [], columns=["fP", "fT", "fL", "fM"])
 
 
@@ -25,7 +25,7 @@ for i in range(3):
     P = P_inicial_superficie(r, T)
     M = Mtot
     L = Ltot
-    modelo.loc[len(modelo)] = {"E":"--", "fase":"INICIO", "r":r, "P":P, "T":T, "L":L, "M":M, "n+1":"-"}
+    modelo.loc[len(modelo)] = {"E":"--", "fase":"INICIO", "r":r, "P":P, "T":T, "L":L, "M":M, "rho":rho(P,T), "n+1":"-"}
 
     # Calculamos y almacenamos los valores de las f_i (derivadas)
     fT = dTdr_rad(r, P, T, L)
@@ -86,7 +86,7 @@ while loop1:
     else:
         # Añadimos las variables calculadas al modelo (asumimos que M y L permanecen constantes)
         r = modelo["r"][i] + h
-        modelo.loc[len(modelo)] = {"E":"--", "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":Ltot, "M":Mtot, "n+1":"-"}
+        modelo.loc[len(modelo)] = {"E":"--", "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":Ltot, "M":Mtot, "rho":rho(P_cal,T_cal), "n+1":"-"}
         derivadas.loc[len(derivadas)] = {"fP":fP, "fT":fT, "fL":0.0, "fM":fM}
 
         # Calculamos la siguiente capa
@@ -144,7 +144,7 @@ while loop1:
     else:
         # Añadimos las variables calculadas al modelo (asumimos que L permanece constante)
         r = modelo["r"][i] + h
-        modelo.loc[len(modelo)] = {"E":"--", "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":Ltot, "M":M_cal, "n+1":"-"}
+        modelo.loc[len(modelo)] = {"E":"--", "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":Ltot, "M":M_cal, "rho":rho(P_cal,T_cal), "n+1":"-"}
         derivadas.loc[len(derivadas)] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
 
         # Calculamos la siguiente capa
@@ -207,7 +207,7 @@ while loop1:
     else:
         # Añadimos las variables calculadas al modelo
         r = modelo["r"][i] + h
-        modelo.loc[len(modelo)] = {"E":ciclo, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "n+1":n1}
+        modelo.loc[len(modelo)] = {"E":ciclo, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "rho":rho(P_cal,T_cal), "n+1":n1}
         derivadas.loc[len(derivadas)] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
 
         # Calculamos la siguiente capa
@@ -258,7 +258,7 @@ while loop1:
     # Añadimos las variables calculadas al modelo
     r = modelo["r"][i] + h
     fP = dPdr_conv(r, T_cal, M_cal, K)
-    modelo.loc[len(modelo)] = {"E":ciclo, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "n+1":"-"}
+    modelo.loc[len(modelo)] = {"E":ciclo, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "rho":rho(P_cal,T_cal), "n+1":"-"}
     derivadas.loc[len(derivadas)] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
 
     # Comparamos r en i+1 con 0.0 (valores muy pequeños)
@@ -285,7 +285,7 @@ for i in range(len(modelo)-1, len(modelo)-4, -1):
     P = P_inicial_centro(r, T, K)
     M = M_inicial_centro(r, T, K)
     L, _ = L_inicial_centro(r, P, T, K)
-    modelo.loc[i] = {"E":"--", "fase":"CENTRO", "r":r, "P":P, "T":T, "L":L, "M":M, "n+1":"-"}
+    modelo.loc[i] = {"E":"--", "fase":"CENTRO", "r":r, "P":P, "T":T, "L":L, "M":M, "rho":rho(P,T), "n+1":"-"}
 
     # Calculamos y almacenamos los valores de las f_i (derivadas)
     fT = dTdr_conv(r, M)
@@ -354,7 +354,7 @@ while loop1:
 
     else:
         # Añadimos las variables calculadas al modelo
-        modelo.loc[i-1] = {"E":ciclo, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "n+1":"-"}
+        modelo.loc[i-1] = {"E":ciclo, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "rho":rho(P_cal,T_cal), "n+1":"-"}
         derivadas.loc[i-1] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
 
         # Calculamos la siguiente capa
@@ -387,7 +387,7 @@ while True:
     P = P_inicial_superficie(r, T)
     M = Mtot
     L = Ltot
-    modelo.loc[i] = {"E":"--", "fase":"^^^^^^", "r":r, "P":P, "T":T, "L":L, "M":M, "n+1":"-"}
+    modelo.loc[i] = {"E":"--", "fase":"^^^^^^", "r":r, "P":P, "T":T, "L":L, "M":M, "rho":rho(P,T), "n+1":"-"}
 
     # Calculamos y almacenamos los valores de las f_i (derivadas)
     fT = dTdr_rad(r, P, T, L)
@@ -416,33 +416,22 @@ P = modelo["P"]
 T = modelo["T"]
 L = modelo["L"]
 M = modelo["M"]
+rho = modelo["rho"]
 
-fig, [[ax1, ax2], [ax3, ax4]] = plt.subplots(nrows=2, ncols=2)
+plots = [{"title":"Presión", "label":"P / $10^{15}$ din cm$^{-2}$", "values":P},
+        {"title":"Temperatura", "label":"T / $10^{7}$ K", "values":T}, 
+        {"title":"Luminosidad", "label":"L / $10^{33}$ erg s$^{-1}$", "values":L},
+        {"title":"Masa", "label":"M / $10^{33}$ g", "values":M},
+        {"title":"Densiadad", "label":"$\\rho$ / g$cm^{-3}$", "values":rho}]
 
-ax1.plot(r, P)
-ax1.set_title("Presión")
-ax1.set_xlabel("r / $10^{10}$ cm")
-ax1.set_ylabel("P / $10^{15}$ din cm$^{-2}$")
-ax1.grid(True)
+for plot in plots:
+    plt.figure(figsize=(6, 4))
+    plt.plot(r, plot["values"])
+    plt.title(plot["title"])
+    plt.xlabel("r / $10^{10}$ cm")
+    plt.ylabel(plot["label"])
+    plt.grid(visible=True)
 
-ax2.plot(r, T)
-ax2.set_title("Temperatura")
-ax2.set_xlabel("r / $10^{10}$ cm")
-ax2.set_ylabel("T / $10^{7}$ K")
-ax2.grid(True)
-
-ax3.plot(r, L)
-ax3.set_title("Luminosidad")
-ax3.set_xlabel("r / $10^{10}$ cm")
-ax3.set_ylabel("L / $10^{33}$ erg s$^{-1}$")
-ax3.grid(True)
-
-ax4.plot(r, M)
-ax4.set_title("Masa")
-ax4.set_xlabel("r / $10^{10}$ cm")
-ax4.set_ylabel("M / $10^{33}$ g")
-ax4.grid(True)
-
-fig.suptitle("Modelo de interior estelar", fontsize=16)
-plt.tight_layout()
 plt.show()
+
+print(modelo)
