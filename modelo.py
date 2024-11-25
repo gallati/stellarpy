@@ -33,34 +33,21 @@ class Modelo:
                                 ("CN", 3.60, 5.00, -12.5, 13.0) ], 
                             columns=["Ciclo", "Tmin", "Tmax", "log10(epsilon1)", "nu"])
 
-        # Definición del valor booleano para no repetir el cálculo del modelo
-        self.CalculoPendiente = True
+        # Ejecución del cálculo
+        self.calcular()
 
     # Definición de la instrucción print sobre el modelo
     def __repr__(self):
-        # Si no se ha realizado aún el cálculo, se realiza
-        if self.CalculoPendiente:
-            self.calcular()
         return self.modelo.__repr__()
     def __str__(self):
-        # Si no se ha realizado aún el cálculo, se realiza
-        if self.CalculoPendiente:
-            self.calcular()
         return self.modelo.to_string()
     
     # Definición de la función para obtener el error relativo total
     def error(self):
-        # Si no se ha realizado aún el cálculo, se realiza
-        if self.CalculoPendiente:
-            self.calcular()
         return self.error_relativo_total
     
     # Definición de la función para la representación gráfica
     def grafica(self):
-        
-        # Si no se ha realizado aún el cálculo, se realiza
-        if self.CalculoPendiente:
-            self.calcular()
 
         r = self.modelo["r"]
         P = self.modelo["P"]
@@ -790,9 +777,5 @@ class Modelo:
         # Juntamos ambas partes tomando como punto intermedio el calculado desde el interior
         self.modelo = pd.concat([exterior.iloc[:-1], interior.iloc[::-1]], ignore_index=True)
 
-        # Confirmamos que ya hemos realizado el cálculo
-        self.CalculoPendiente = False
-
 
 modelo = Modelo(Mtot=5, Rtot=10.93, Ltot=73.57, Tc=1.95)
-
