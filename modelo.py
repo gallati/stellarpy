@@ -455,7 +455,8 @@ class Modelo:
         ################################################################################
 
         Rini = 0.9*self.Rtot
-        h = - Rini/100
+        paso = 100
+        h = - Rini/paso
         r = Rini
 
         for i in range(3):
@@ -681,8 +682,8 @@ class Modelo:
         # ------------------------ Primeras tres capas (centro) ---------------------- #
         ################################################################################
 
-        h = Rini/100   # Redefinimos el paso
-        r = 0.0        # Integramos desde r = 0.0
+        h = Rini/paso   # Redefinimos el paso
+        r = 0.0         # Integramos desde r = 0.0
 
         # Iteramos las primeras tres capas
         for i in range(3):
@@ -765,17 +766,50 @@ class Modelo:
         rad = np.array(exterior.loc[len(exterior)-1, "P":"M"].to_list(), dtype=float)
         conv = np.array(interior.loc[len(interior)-1, "P":"M"].to_list(), dtype=float)
 
+        # Redefinimos los índices del interior para que el centro sea i = paso
+        interior.index = range(paso, paso - convec_index - 1, -1)
+
 
         ################################################################################
-        # -------------------------- Error relativo total ---------------------------- #
+        # ------------------------- Capas más superficiales -------------------------- #
+        ################################################################################
+
+        # Reutilizamos el código del primer apartado
+
+        r = Rini + h
+        i = -1
+
+        # Calculamos hasta llegar a Rtot
+        while self.Rtot - r > 0.0:
+
+            # Calculamos y almacenamos los valores del modelo
+            T = self.T_inicial_superficie(r)
+            P = np.real(self.P_inicial_superficie(r, T))    # Al trabajar con r casi Rtot, tomamos la parte real
+            M = self.Mtot
+            L = self.Ltot
+            exterior.loc[i] = {"E":"--", "fase":"^^^^^^", "r":r, "P":P, "T":T, "L":L, "M":M, "rho":self.rho(P,T), "n+1":"-"}
+
+            # Calculamos y almacenamos los valores de las f_i (derivadas)
+            fT = self.dTdr_rad(r, P, T, L)
+            fP = self.dPdr_rad(r, P, T, M)
+            fM = 0.0
+            fL = 0.0
+            derivadas_exterior.loc[i] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
+
+            # Aumentamos el valor del radio y subimos una capa
+            r += h
+            i -= 1
+
+
+        ################################################################################
+        # ---------------------- Modelo y error relativo total ----------------------- #
         ################################################################################
 
         # A partir de los datos que da la integración desde el centro y desde la superficie 
         # calculamos el error relativo total
         self.error_relativo_total = self.err_rel_total(rad, conv)*100 
 
+        # Juntamos ambas partes tomando como punto intermedio el calculado desde el exterior
+        self.modelo = pd.concat([exterior, interior.iloc[:-1]]).sort_index()
         # Juntamos ambas partes tomando como punto intermedio el calculado desde el interior
-        self.modelo = pd.concat([exterior.iloc[:-1], interior.iloc[::-1]], ignore_index=True)
-
-
-modelo = Modelo(Mtot=5, Rtot=10.93, Ltot=73.57, Tc=1.95)
+        # self.modelo = pd.concat([exterior.sort_index().iloc[:-1], interior]).sort_index()
