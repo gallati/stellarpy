@@ -44,7 +44,7 @@ def grafica_errores(n, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0, dR=0.5, dL=5.0):
     plt.show()
 
 
-grafica_errores(3, Mtot=5.0, Ltot=70.0, Rtot=11.5, Tc=1.95)
+grafica_errores(1, Mtot=5.0, Rtot=10.93, Ltot=73.57, Tc=1.95, dR=0.1, dL=1.0)
 
 # plt.plot()
 
@@ -58,3 +58,4 @@ grafica_errores(3, Mtot=5.0, Ltot=70.0, Rtot=11.5, Tc=1.95)
 # print(result)
 
 # print(Modelo(Mtot=5.0, Rtot=10.93, Ltot=73.52, Tc=1.95).error())
+
