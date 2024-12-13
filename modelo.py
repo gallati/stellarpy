@@ -47,18 +47,18 @@ class Modelo:
         return self.error_relativo_total
     
     # Definición de la función para la representación gráfica
-    def grafica(self, which=["P", "T", "L", "M", "rho"], x_axis="r", merge=False):
+    def grafica(self, x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False):
         """
         Función para graficar las variables calculadas por el modelo.
 
         Parámetros:
-            - which (iterable, default = ["P", "T", "L", "M", "rho"]): 
-                Lista (o iterable) que contiene las variables que se quieren graficar en formato string. 
-                Admite los valores 'r', 'P', 'T', 'L', 'M' y 'rho'.
-
             - x_axis (string, default = 'r'): 
-                String que indica qué variable se utiliza como variable independiente. Admite los mismos 
-                valores que which.
+                String que indica qué variable se utiliza como variable independiente. Admite los valores 
+                siguientes: 'r', 'P', 'T', 'L', 'M' y 'rho'.
+
+            - which (iterable, default = ["P", "T", "L", "M", "rho"]): 
+                Lista (o iterable) que contiene las variables dependientes que se quieren graficar en formato 
+                string. Admite los mismos valores que x_axis.
 
             - merge (bool, default = False):
                 Si es True, representa todas las variables especificadas en which en una misma figura y
@@ -93,9 +93,7 @@ class Modelo:
 
             for variable in which:
                 # Normalizamos los valores
-                plots.loc[variable]["values"] = plots.loc[variable]["values"]/plots.loc[variable]["values"].max()
-
-                plt.plot(x_plot.loc[x_axis]["values"].values, plots.loc[variable]["values"], label=plots.loc[variable]["title"])
+                plt.plot(x_plot.loc[x_axis]["values"].values, plots.loc[variable]["values"]/plots.loc[variable]["values"].max(), label=plots.loc[variable]["title"])
                 plt.xlabel(x_plot.loc[x_axis]["label"])
                 plt.legend()
                 plt.grid(visible=True)
@@ -854,6 +852,6 @@ class Modelo:
         # Juntamos ambas partes tomando como punto intermedio el calculado desde el interior
         # self.modelo = pd.concat([exterior.sort_index().iloc[:-1], interior]).sort_index()
 
-Modelo(Rtot=10.93, Ltot=73.57, Tc=1.95).grafica(which=["T", "r", "M"], x_axis="M", merge=True)
+Modelo(Rtot=10.93, Ltot=73.57, Tc=1.95).grafica(merge=True)
 
 # print(Modelo(Rtot=10.93, Ltot=73.57, Tc=1.95).error())
