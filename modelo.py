@@ -67,44 +67,32 @@ class Modelo:
                 sin normalizar.
         """
         
-        # Extraemos los valores del modelo
-        r = self.modelo["r"]
-        P = self.modelo["P"]
-        T = self.modelo["T"]
-        L = self.modelo["L"]
-        M = self.modelo["M"]
-        rho = self.modelo["rho"]
-
-        plots = pd.DataFrame(data=[("Radio", "r / $10^{10}$ cm", r),
-                                ("Presión", "P / $10^{15}$ din cm$^{-2}$", P), 
-                                ("Temperatura", "T / $10^{7}$ K", T),
-                                ("Luminosidad", "L / $10^{33}$ erg s$^{-1}$", L),
-                                ("Masa", "M / $10^{33}$ g", M),
-                                ("Densiadad","$\\rho$ / g$cm^{-3}$", rho)],
-                            columns=["title", "label", "values"],
+        # Definimos los títulos y etiquetas para cada variable
+        plots = pd.DataFrame(data=[("Radio", "r / $10^{10}$ cm"),
+                                ("Presión", "P / $10^{15}$ din cm$^{-2}$"), 
+                                ("Temperatura", "T / $10^{7}$ K"),
+                                ("Luminosidad", "L / $10^{33}$ erg s$^{-1}$"),
+                                ("Masa", "M / $10^{33}$ g"),
+                                ("Densiadad","$\\rho$ / g$cm^{-3}$")],
+                            columns=["title", "label"],
                             index=["r", "P", "T", "L", "M", "rho"])
 
-        # Identificamos la variable independiente
-        x_plot = plots[plots.index == x_axis]
-
-        # Si queremos las gráficas en la misma figura
+        # Si queremos las gráficas en la misma figura (curvas normalizadas)
         if merge:
             plt.figure(figsize=(8, 6))
-
             for variable in which:
-                # Normalizamos los valores
-                plt.plot(x_plot.loc[x_axis]["values"].values, plots.loc[variable]["values"]/plots.loc[variable]["values"].max(), label=plots.loc[variable]["title"])
-                plt.xlabel(x_plot.loc[x_axis]["label"])
+                plt.plot(self.modelo[x_axis], self.modelo[variable]/self.modelo[variable].max(), label=plots.loc[variable]["title"])
+                plt.xlabel(plots.loc[x_axis]["label"])
                 plt.legend()
                 plt.grid(visible=True)
 
-        # Si queremos utilizar diferentes figuras
+        # Si queremos utilizar diferentes figuras (curvas sin normalizar)
         else:
             for variable in which:
                 plt.figure(figsize=(8, 6))
-                plt.plot(x_plot.loc[x_axis]["values"].values, plots.loc[variable]["values"])
+                plt.plot(self.modelo[x_axis], self.modelo[variable])
                 plt.title(plots.loc[variable]["title"])
-                plt.xlabel(x_plot.loc[x_axis]["label"])
+                plt.xlabel(plots.loc[x_axis]["label"])
                 plt.ylabel(plots.loc[variable]["label"])
                 plt.grid(visible=True)
 
@@ -852,6 +840,6 @@ class Modelo:
         # Juntamos ambas partes tomando como punto intermedio el calculado desde el interior
         # self.modelo = pd.concat([exterior.sort_index().iloc[:-1], interior]).sort_index()
 
-Modelo(Rtot=10.93, Ltot=73.57, Tc=1.95).grafica(merge=True)
+Modelo(Rtot=10.93, Ltot=73.57, Tc=1.95).grafica(x_axis="M")
 
 # print(Modelo(Rtot=10.93, Ltot=73.57, Tc=1.95).error())
