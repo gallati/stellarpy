@@ -299,9 +299,9 @@ class Modelo:
             T = capa["T"]          # T en la capa i
             fP = derivadas["fP"][i]     # fP en la capa i
             fT = derivadas["fT"][i]     # fT en la capa i
-            AP1 = h * (derivadas["fP"][i] -  derivadas["fP"][i])                            # AP1 en la capa i
+            AP1 = h * (derivadas["fP"][i] -  derivadas["fP"][i-1])                            # AP1 en la capa i
             AP2 = h * (derivadas["fP"][i] - 2*derivadas["fP"][i-1] + derivadas["fP"][i-2])  # AP2 en la capa i
-            AT1 = h * (derivadas["fT"][i] -  derivadas["fT"][i])                            # AT1 en la capa i
+            AT1 = h * (derivadas["fT"][i] -  derivadas["fT"][i-1])                            # AT1 en la capa i
 
             P_est = P + h*fP + AP1/2 + 5*AP2/12     # P estimado en la capa i+1
             T_est = T + h*fT + AT1/2                # T estimado en la capa i+1
@@ -840,6 +840,7 @@ class Modelo:
         # Juntamos ambas partes tomando como punto intermedio el calculado desde el interior
         # self.modelo = pd.concat([exterior.sort_index().iloc[:-1], interior]).sort_index()
 
-Modelo(Rtot=10.93, Ltot=73.57, Tc=1.95).grafica(x_axis="M")
+# Modelo(Rtot=10.93, Ltot=73.57, Tc=1.95).grafica(merge=True)
 
+print(Modelo(Tc=1.95))
 # print(Modelo(Rtot=10.93, Ltot=73.57, Tc=1.95).error())
