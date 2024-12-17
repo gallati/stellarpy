@@ -1,9 +1,38 @@
 import matplotlib.pyplot as plt
+from matplotlib.ticker import AutoMinorLocator
 import pandas as pd
 import numpy as np
 
 class Modelo:
+    """
+    Modelo numérico de interior estelar. Incluye el cálculo de las variables de radio, 
+    presión, temperatura, masa, luminosidad y densidad a lo largo de la estrella.
     
+    ## Parámetros
+        * Mtot (float, default = 5.0) : masa total de la estrella.
+        * Rtot (float, default = 11.5) : radio total de la estrella.
+        * Ltot (float, default = 70.0) : luminosidad total de la estrella.
+        * Tc (float, default = 2.0) : temperatura central de la estrella.
+
+    ## Atributos
+        * error() : devuelve el error relativo total del cálculo numérico.
+        * grafica(x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False): permite
+        la representación gráfica de las magnitudes calculadas.
+
+    ## Unidades
+    Para la correcta realización de los cálculos del modelo el sistema de unidades adoptado 
+    para la entrada de parámetros y la interpretación de resultados varía respecto al cgs.
+
+    * radio (r)                         ->   1e10 cm
+    * presión (P)                       ->   1e15 din cm^-2
+    * temperatura (T)                   ->   1e7 K
+    * masa (M)                          ->   1e33 g
+    * luminosidad (L)                   ->   1e33 erg s^-1
+    * densidad (rho)                    ->   1 g cm^-3
+    * generación de energía (epsilon)   ->   1 erg g^-1 s^-1
+    * opacidad (kappa)                  ->   1 cm^2 g^-1
+    """
+
     # Definición del inicializador del modelo
     def __init__(self, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0):
 
@@ -20,7 +49,7 @@ class Modelo:
         self.mu = 1/(2*self.X + 3*self.Y/4 + self.Z/2)
         self.R = 8.31447 * 10**7
 
-        # Definición de la Tabla 1 (ritmo de generación de energía)
+        # Definición de la Tabla 1 (ritmo de generación de energía) en unidades de 10e7 K
         self.epsilon_df = pd.DataFrame(data=[("pp", 0.40, 0.60, -6.84, 6.0),
                                 ("pp", 0.60, 0.95, -6.04, 5.0), 
                                 ("pp", 0.95, 1.20, -5.56, 4.5), 
@@ -44,28 +73,34 @@ class Modelo:
     
     # Definición de la función para obtener el error relativo total
     def error(self):
+        """
+        Devuelve el error relativo total del modelo.
+        """
         return self.error_relativo_total
     
     # Definición de la función para la representación gráfica
     def grafica(self, x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False):
         """
-        Función para graficar las variables calculadas por el modelo.
+        Función para graficar las magnitudes calculadas por el modelo.
 
-        Parámetros:
-            - x_axis (string, default = 'r'): 
-                String que indica qué variable se utiliza como variable independiente. Admite los valores 
-                siguientes: 'r', 'P', 'T', 'L', 'M' y 'rho'.
+        ## Parámetros
+            * x_axis (string, default = 'r'): \\ 
+            String que indica qué variable se utiliza como variable independiente. Admite los valores 
+            siguientes: 'r', 'P', 'T', 'L', 'M' y 'rho'.
 
-            - which (iterable, default = ["P", "T", "L", "M", "rho"]): 
-                Lista (o iterable) que contiene las variables dependientes que se quieren graficar en formato 
-                string. Admite los mismos valores que x_axis.
+            * which (iterable, default = ["P", "T", "L", "M", "rho"]): \\
+            Lista (o iterable) que contiene las variables dependientes que se quieren graficar en formato 
+            string. Admite los mismos valores que x_axis.
 
-            - merge (bool, default = False):
-                Si es True, representa todas las variables especificadas en which en una misma figura y
-                normalizadas.
-                Si es False, representa todas las variables especificadas en which en diferentes figuras
-                sin normalizar.
+            * merge (bool, default = False): \\
+            Si es True, representa todas las variables especificadas en which en una misma figura y
+            normalizadas.
+            Si es False, representa todas las variables especificadas en which en diferentes figuras
+            sin normalizar.
         """
+
+        # Cambiamos la fuente utilizada
+        plt.rcParams['font.family'] = 'serif'
         
         # Definimos los títulos y etiquetas para cada variable
         plots = pd.DataFrame(data=[("Radio", "r / $10^{10}$ cm"),
@@ -73,28 +108,52 @@ class Modelo:
                                 ("Temperatura", "T / $10^{7}$ K"),
                                 ("Luminosidad", "L / $10^{33}$ erg s$^{-1}$"),
                                 ("Masa", "M / $10^{33}$ g"),
-                                ("Densiadad","$\\rho$ / g$cm^{-3}$")],
+                                ("Densidad","$\\rho$ / g$cm^{-3}$")],
                             columns=["title", "label"],
                             index=["r", "P", "T", "L", "M", "rho"])
 
+        # Calculamos para qué valor se produce la transición a zona convectiva
+        transicion = self.modelo[self.modelo["fase"] == "CONVEC"].iloc[0][x_axis] 
+
         # Si queremos las gráficas en la misma figura (curvas normalizadas)
         if merge:
-            plt.figure(figsize=(8, 6))
+            plt.figure(figsize=(10, 7))
             for variable in which:
                 plt.plot(self.modelo[x_axis], self.modelo[variable]/self.modelo[variable].max(), label=plots.loc[variable]["title"])
-                plt.xlabel(plots.loc[x_axis]["label"])
-                plt.legend()
-                plt.grid(visible=True)
+            
+            # Customizamos la gráfica
+            plt.title("Modelo de interior estelar", fontsize=20)      # Título
+            plt.xlabel(plots.loc[x_axis]["label"], fontsize=16)       # Nombre eje x
+            plt.ylabel("Fracción del total", fontsize=16)             # Nombre eje y
+            plt.tick_params(axis='both', labelsize=14)                # Tamaño de los números
+            plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))   # Ticks menores eje x
+            plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))   # Ticks menores eje y
+            
+            # Marcamos la zona convectiva de la estrella
+            plt.axvspan(-1, transicion, color='gray', alpha=0.2, label=f"Zona convectiva")
+            plt.legend(fontsize=12)                                   # Leyenda
+            plt.grid(visible=True)                                    # Grid
+            
+
 
         # Si queremos utilizar diferentes figuras (curvas sin normalizar)
         else:
             for variable in which:
-                plt.figure(figsize=(8, 6))
-                plt.plot(self.modelo[x_axis], self.modelo[variable])
-                plt.title(plots.loc[variable]["title"])
-                plt.xlabel(plots.loc[x_axis]["label"])
-                plt.ylabel(plots.loc[variable]["label"])
-                plt.grid(visible=True)
+                plt.figure(figsize=(10, 7))
+                plt.plot(self.modelo[x_axis], self.modelo[variable], color="k")
+
+                # Customizamos la gráfica
+                plt.title(plots.loc[variable]["title"], fontsize=20)      # Título
+                plt.xlabel(plots.loc[x_axis]["label"], fontsize=16)       # Nombre eje x
+                plt.ylabel(plots.loc[variable]["label"], fontsize=16)     # Nombre eje y
+                plt.tick_params(axis='both', labelsize=14)                # Tamaño de los números
+                plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))   # Ticks menores eje x
+                plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))   # Ticks menores eje y
+
+                # Marcamos la zona convectiva de la estrella
+                plt.axvspan(-1, transicion, color='gray', alpha=0.2, label=f"Zona convectiva")
+                plt.legend(fontsize=16)                                   # Leyenda
+                plt.grid(visible=True)                                    # Grid
 
         plt.show()
 
@@ -840,7 +899,8 @@ class Modelo:
         # Juntamos ambas partes tomando como punto intermedio el calculado desde el interior
         # self.modelo = pd.concat([exterior.sort_index().iloc[:-1], interior]).sort_index()
 
-# Modelo(Rtot=10.93, Ltot=73.57, Tc=1.95).grafica(merge=True)
-
-print(Modelo(Tc=1.95))
+# Modelo(Rtot=11.06, Ltot=76.01, Tc=1.956).grafica(x_axis="M", merge=False)
+# print(Modelo(Rtot=11.06, Ltot=76.01, Tc=1.956))
+# 1.106e+01  7.601e+01  1.956e+00
+# print(Modelo(Tc=1.95))
 # print(Modelo(Rtot=10.93, Ltot=73.57, Tc=1.95).error())
