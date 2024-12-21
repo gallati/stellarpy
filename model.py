@@ -640,7 +640,7 @@ class Model:
             if not stepX(self, M_cal, self.Mtot):
                 break           # First loop break
             else:
-                # Storing values and derivatives (mass and luminosity ramain constant)
+                # Storing values and derivatives (mass and luminosity remain constant)
                 r = shell["r"] + h
                 outer.loc[i+1] = {"E":"--", "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":self.Ltot, "M":self.Mtot, "rho":rho(self, P_cal, T_cal), "n+1":"-"}
                 outer_derivatives.loc[i+1] = {"fP":fP, "fT":fT, "fL":0.0, "fM":fM}
@@ -803,69 +803,59 @@ class Model:
             # Values for the current shell and derivatives of the current and two previous shells
             shell = inside.loc[i]
             derivatives = inside_derivatives.loc[i-2:i]
-
             # Performing the second step bis
             _, T_est = step2(self, shell, derivatives, h, i)
 
-            while True:
-
-                # Aplicamos el cálculo de P con la constante del politropo K
+            while True:         # Loop 
+                
+                # Estimating pressure using the polytrope constant
                 P_est = polytrope(self, K, T_est)
-
-                # Aplicamos el paso 3
+                # Performing the third step
                 M_cal, fM = step3(self, shell, derivatives, P_est, T_est, shell["M"], h, i)
-
-                # Aplicamos el paso 7 bis
-                if shell["r"] + h < 1e-6:  # Tomamos como 0 valores muy pequeños
+                # Performing the seventh step bis
+                if shell["r"] + h < 1e-6:           # Very small values are considered zero
                     T_cal = T_est
                 elif shell["r"] + h > 0.0:
                     T_cal, fT = step7bis(self, shell, derivatives, M_cal, h, i)
-
-                # Aplicamos el paso 8
+                # Performing the eighth step
                 if stepX(self, T_cal, T_est):
-                    break
+                    break       # Loop break
                 else:
                     T_est = T_cal
 
-            # Aplicamos el cálculo de P con la constante del politropo K
+            # Calculating pressure using the polytrope constant
             P_cal = polytrope(self, K, T_cal)
-
-            # Aplicamos el paso 6 
+            # Performing the sixth step
             L_cal, fL, cycle = step6(self, shell, derivatives, P_cal, T_cal, shell["L"], h, i)
-
-            # Calculamos el radio y fP
+            # Calculating the radius for the i+1 shell and the derivative of the pressure for the i shell
             r = shell["r"] + h
             fP = dPdr_conv(self, r, T_cal, M_cal, K)
-
-            # Añadimos las variables calculadas al modelo
+            # Storing values and derivatives
             inside.loc[i+1] = {"E":cycle, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "rho":rho(self, P_cal, T_cal), "n+1":"-"}
             inside_derivatives.loc[i+1] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
 
-            # Calculamos la siguiente capa
+            # Moving forward one step
             i += 1
 
-
-        # Almacenamos los datos que da la integración desde el centro y desde la superficie
+        # Storing data from both surface integration and center integration
         rad = np.array(outer.loc[len(outer)-1, "P":"M"].to_list(), dtype=float)
         conv = np.array(inside.loc[len(inside)-1, "P":"M"].to_list(), dtype=float)
 
-        # Redefinimos los índices del inside para que el centro sea i = totalShells
+        # Redefining inside dataframe index so r=0.0 corresponds to i=totalShells
         inside.index = range(totalShells, totalShells - convec_index - 1, -1)
 
 
         ################################################################################
-        # ------------------------- Capas más superficiales -------------------------- #
+        # ------------------------- More superficial shells -------------------------- #
         ################################################################################
 
-        # Reutilizamos el código del primer apartado
+        r = Rini + h            # Initializing the radius variable
+        i = -1                      
 
-        r = Rini + h
-        i = -1
-
-        # Calculamos hasta llegar a Rtot
+        # Iterating until reaching the total radius
         while self.Rtot - r > 0.0:
 
-            # Calculamos y almacenamos los valores del modelo
+            # Calculating and storing the values for the first three shells
             T = initial_surface_T(self, r)
             P = np.real(initial_surface_P(self, r, T))    # Since r ~ Rtot, the programm crashes if we do not take the real part
             M = self.Mtot
@@ -879,31 +869,19 @@ class Model:
             fL = 0.0
             outer_derivatives.loc[i] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
 
-            # Aumentamos el valor del radio y subimos una capa
+            # Moving backward one step
             r += h
             i -= 1
 
 
         ################################################################################
-        # ---------------------- Modelo y error relativo total ----------------------- #
+        # ---------------------- Model and total relative error ---------------------- #
         ################################################################################
 
-        # A partir de los datos que da la integración desde el centro y desde la superficie 
-        # calculamos el error relativo total
+        # Calculating total relative error using surface integration data and center integration data
         self.totalRelativeError = calculate_total_relative_error(self, rad, conv)*100 
 
-        # Juntamos ambas partes tomando como punto intermedio el calculado desde el outer
+        # Joning outer and inside DataFrames using outer middle point
         self.model = pd.concat([outer, inside.iloc[:-1]]).sort_index()
-        # Juntamos ambas partes tomando como punto intermedio el calculado desde el inside
+        # Joning outer and inside DataFrames using inside middle point
         # self.model = pd.concat([outer.sort_index().iloc[:-1], inside]).sort_index()
-
-modelo = Model(Rtot=11.06, Ltot=76.01, Tc=1.956)
-print(modelo)
-print(modelo.error())
-# print(modelo)
-# print(modelo.error())
-# print(Modelo(Rtot=11.06, Ltot=76.01, Tc=1.956))
-# 1.106e+01  7.601e+01  1.956e+00
-# print(Modelo(Tc=1.95))
-# print(Modelo(Rtot=10.93, Ltot=73.57, Tc=1.95).error())
-# Model().

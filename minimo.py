@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize
-from modelo import Modelo
+from model import Model
 
 # def grafica_errores(n, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0, dR=0.5, dL=5.0):
 #     """
@@ -81,17 +81,6 @@ from modelo import Modelo
 #   Equation of State Limitations may not accurately describe all stellar conditions
 #       Particularly challenging for extreme environments (white dwarf interiors, neutron star crusts)
 
-i = 0
-j = 1
-while True:
-    print(i)
-    i+=1
-    while True:
-        print(f"Segundo bucle {j}")
-        j+=1
-
-        if j > 5:
-            break
-    
-    if i > 5:
-        break
+# modelo = Model(Rtot=11.06, Ltot=76.01, Tc=1.956)
+# print(modelo)
+# print(modelo.error())
