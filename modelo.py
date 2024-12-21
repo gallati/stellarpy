@@ -99,8 +99,11 @@ class Modelo:
             sin normalizar.
         """
 
-        # Cambiamos la fuente utilizada
-        plt.rcParams['font.family'] = 'serif'
+        # Cambiamos la fuente utilizada y los colores
+        plt.rcParams["font.family"] = "serif"
+        # plt.style.use("tableau-colorblind10")
+        # 'classic' 'grayscale' 'seaborn-v0_8-colorblind' 'seaborn-v0_8-dark-palette' 'seaborn-v0_8-muted'
+
         
         # Definimos los títulos y etiquetas para cada variable
         plots = pd.DataFrame(data=[("Radio", "r / $10^{10}$ cm"),
@@ -108,7 +111,7 @@ class Modelo:
                                 ("Temperatura", "T / $10^{7}$ K"),
                                 ("Luminosidad", "L / $10^{33}$ erg s$^{-1}$"),
                                 ("Masa", "M / $10^{33}$ g"),
-                                ("Densidad","$\\rho$ / g$cm^{-3}$")],
+                                ("Densidad","$\\rho$ / g cm$^{-3}$")],
                             columns=["title", "label"],
                             index=["r", "P", "T", "L", "M", "rho"])
 
@@ -119,8 +122,8 @@ class Modelo:
         if merge:
             plt.figure(figsize=(10, 7))
             for variable in which:
-                plt.plot(self.modelo[x_axis], self.modelo[variable]/self.modelo[variable].max(), label=plots.loc[variable]["title"])
-            
+                plt.plot(self.modelo[x_axis], self.modelo[variable]/self.modelo[variable].max(), label=plots.loc[variable]["title"], linewidth=1.5)
+
             # Customizamos la gráfica
             plt.title("Modelo de interior estelar", fontsize=20)      # Título
             plt.xlabel(plots.loc[x_axis]["label"], fontsize=16)       # Nombre eje x
@@ -131,8 +134,9 @@ class Modelo:
             
             # Marcamos la zona convectiva de la estrella
             plt.axvspan(-1, transicion, color='gray', alpha=0.2, label=f"Zona convectiva")
-            plt.legend(fontsize=12)                                   # Leyenda
-            plt.grid(visible=True)                                    # Grid
+            plt.legend(fontsize=12)                                                         # Leyenda
+            plt.grid(which="major", linestyle='-', linewidth=1, visible=True)               # Major grid
+            plt.grid(which="minor", linestyle=':', linewidth=0.5, visible=True, alpha=0.5)  # Minor grid
             
 
 
@@ -140,7 +144,7 @@ class Modelo:
         else:
             for variable in which:
                 plt.figure(figsize=(10, 7))
-                plt.plot(self.modelo[x_axis], self.modelo[variable], color="k")
+                plt.plot(self.modelo[x_axis], self.modelo[variable], color="k", linewidth=1.5)
 
                 # Customizamos la gráfica
                 plt.title(plots.loc[variable]["title"], fontsize=20)      # Título
@@ -152,8 +156,9 @@ class Modelo:
 
                 # Marcamos la zona convectiva de la estrella
                 plt.axvspan(-1, transicion, color='gray', alpha=0.2, label=f"Zona convectiva")
-                plt.legend(fontsize=16)                                   # Leyenda
-                plt.grid(visible=True)                                    # Grid
+                plt.legend(fontsize=16)                                                         # Leyenda
+                plt.grid(which="major", linestyle='-', linewidth=1, visible=True)               # Major grid
+                plt.grid(which="minor", linestyle=':', linewidth=0.5, visible=True, alpha=0.5)  # Minor grid
 
         plt.show()
 
@@ -753,7 +758,7 @@ class Modelo:
 
         # Almacenamos el número de capas que quedan por calcular
 
-        convec_index = 101 - len(exterior)
+        convec_index = (paso+1) - len(exterior)
 
 
         ################################################################################
@@ -899,7 +904,10 @@ class Modelo:
         # Juntamos ambas partes tomando como punto intermedio el calculado desde el interior
         # self.modelo = pd.concat([exterior.sort_index().iloc[:-1], interior]).sort_index()
 
-# Modelo(Rtot=11.06, Ltot=76.01, Tc=1.956).grafica(x_axis="M", merge=False)
+# modelo = Modelo(Rtot=11.06, Ltot=76.01, Tc=1.956)
+# modelo.grafica(merge=True)
+# print(modelo)
+# print(modelo.error())
 # print(Modelo(Rtot=11.06, Ltot=76.01, Tc=1.956))
 # 1.106e+01  7.601e+01  1.956e+00
 # print(Modelo(Tc=1.95))

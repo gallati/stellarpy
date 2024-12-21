@@ -5,18 +5,16 @@ from modelo import Modelo
 
 # def grafica_errores(n, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0, dR=0.5, dL=5.0):
 #     """
-#     - Descripción:
 #     Genera una gráfica que muestra el error relativo total para variaciones de L y R.
 
-#     - Parámetros:
-#         n: Tamaño del máximo incremento. 
-#             Se calculan incrementos como [Xtot - n*dX, ..., Xtot + 0*dX, ..., Xtot + n*dX]
-#         Mtot: Masa total del modelo (default 5.0)
-#         Rtot: Radio total del modelo (default 11.5)
-#         Ltot: Luminosidad total del modelo (default 70.0)
-#         Tc: Temperatura central del modelo (default 2.0)
-#         dR: Variación del radio (default 0.5)
-#         dL: Variación de la luminosidad (default 5.0)
+#     ## Parámetros:
+#         * n: Tamaño del máximo incremento. Se calculan incrementos como [Xtot - n*dX, ..., Xtot + 0*dX, ..., Xtot + n*dX]
+#         * Mtot: Masa total del modelo (default 5.0)
+#         * Rtot: Radio total del modelo (default 11.5)
+#         * Ltot: Luminosidad total del modelo (default 70.0)
+#         * Tc: Temperatura central del modelo (default 2.0)
+#         * dR: Variación del radio (default 0.5)
+#         * dL: Variación de la luminosidad (default 5.0)
 #     """
 
 #     # Dimensiones de la tabla e inicialización de la matriz de errores
@@ -24,7 +22,9 @@ from modelo import Modelo
 #     matriz_error = np.zeros((d, d), dtype=float)
 
 #     # Creamos la figura
+#     plt.rcParams['font.family'] = 'serif'   # Cambiamos la fuente utilizada
 #     fig, ax = plt.subplots()
+    
 
 #     # Calculamos la matriz de errores
 #     for i in range(d):
@@ -44,22 +44,20 @@ from modelo import Modelo
 #     plt.show()
 
 
-# grafica_errores(1, Mtot=5.0, Rtot=10.93, Ltot=73.57, Tc=1.95, dR=0.1, dL=1.0)
+# grafica_errores(3, Mtot=5.0, Rtot=11.06, Ltot=76.01, Tc=1.956, dR=0.1, dL=1.0)
 
-# plt.plot()
 
-print("Proceso iniciado")
 
-def minimo_error_modelo(x):
-    return Modelo(Mtot=5.0, Rtot=x[0], Ltot=x[1], Tc=x[2]).error()
+# def minimo_error_modelo(x):
+#     return Modelo(Mtot=5.0, Rtot=x[0], Ltot=x[1], Tc=x[2]).error()
 
-initial_guess = [11.5, 70.0, 1.95]
+# initial_guess = [11.06, 76.01, 1.956]
 
-result = minimize(minimo_error_modelo, initial_guess)
+# result = minimize(minimo_error_modelo, initial_guess)
 
-print(result)
+# print(result)
 
-print(Modelo(Mtot=5.0, Rtot=10.93, Ltot=73.52, Tc=1.95).error())
+# print(Modelo(Mtot=5.0, Rtot=10.93, Ltot=73.52, Tc=1.95).error())
 
 
 
@@ -83,3 +81,17 @@ print(Modelo(Mtot=5.0, Rtot=10.93, Ltot=73.52, Tc=1.95).error())
 #   Equation of State Limitations may not accurately describe all stellar conditions
 #       Particularly challenging for extreme environments (white dwarf interiors, neutron star crusts)
 
+i = 0
+j = 1
+while True:
+    print(i)
+    i+=1
+    while True:
+        print(f"Segundo bucle {j}")
+        j+=1
+
+        if j > 5:
+            break
+    
+    if i > 5:
+        break
