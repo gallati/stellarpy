@@ -106,7 +106,6 @@ class Model:
         # plt.style.use("tableau-colorblind10")
         # 'classic' 'grayscale' 'seaborn-v0_8-colorblind' 'seaborn-v0_8-dark-palette' 'seaborn-v0_8-muted'
         figSize = (10, 7)
-
         
         # Defining titles and labels for each variable 
         plots = pd.DataFrame(data=[("Radius", "r / $10^{10}$ cm"),
@@ -127,7 +126,7 @@ class Model:
             for variable in which:
                 plt.plot(self.model[x_axis], self.model[variable]/self.model[variable].max(), label=plots.loc[variable]["title"], linewidth=1.5)
 
-            # Customizing the plots
+            # Customizing the plot
             plt.title("Stellar-interior model", fontsize=20)          # Title
             plt.xlabel(plots.loc[x_axis]["label"], fontsize=16)       # x axis label
             plt.ylabel("Normalized magnitude", fontsize=16)           # y axis label
