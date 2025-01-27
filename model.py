@@ -18,7 +18,7 @@ class Model:
     ## Methods
         * error() : function that returns the total relative error of the numerical 
         calculation.
-        * visualize(x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False): 
+        * visualize(x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False) : 
         function that enables the graphical representation of the calculated variables.
 
     ## Units
@@ -82,9 +82,9 @@ class Model:
         return self.totalRelativeError
 
     # Defining the plot method
-    def visualize(self, x_axis='r', which=['P', 'T', 'L', 'M', 'rho'], merge=False):
+    def visualize(self, x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False):
         """
-        Function that enables the graphical representation of the calculated variables.
+        Function to graph the calculated variables.
 
         ## Parameters
             * x_axis (string, default = 'r'): \\ 
@@ -130,15 +130,15 @@ class Model:
             plt.title("Stellar-interior model", fontsize=20)          # Title
             plt.xlabel(plots.loc[x_axis]["label"], fontsize=16)       # x axis label
             plt.ylabel("Normalized magnitude", fontsize=16)           # y axis label
-            plt.tick_params(axis='both', labelsize=14)                # Numbering size
+            plt.tick_params(axis="both", labelsize=14, length=10)     # Numbering size
             plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))   # Minor ticks (x axis)
             plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))   # Minor ticks (y axis)
             
             # Marking the convective zone of the star
-            plt.axvspan(-1, transition, color='gray', alpha=0.2, label="Convective zone")
+            plt.axvspan(-1, transition, color="gray", alpha=0.2, label="Convective zone")
             plt.legend(fontsize=12)                                                         # Leyend
-            plt.grid(which="major", linestyle='-', linewidth=1, visible=True)               # Major grid
-            plt.grid(which="minor", linestyle=':', linewidth=0.5, visible=True, alpha=0.5)  # Minor grid
+            plt.grid(which="major", linestyle="-", linewidth=1, visible=True)               # Major grid
+            plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True, alpha=0.5)  # Minor grid
 
         # Curves in different figures (without normalization)
         else:
@@ -150,15 +150,15 @@ class Model:
                 plt.title(plots.loc[variable]["title"], fontsize=20)      # Title
                 plt.xlabel(plots.loc[x_axis]["label"], fontsize=16)       # x axis label
                 plt.ylabel(plots.loc[variable]["label"], fontsize=16)     # y axis label
-                plt.tick_params(axis='both', labelsize=14)                # Numbering size
+                plt.tick_params(axis="both", labelsize=14, length=10)   # Numbering size
                 plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))   # Minor ticks (x axis)
                 plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))   # Minor ticks (y axis)
 
                 # Marking the convective zone of the star for each figure
-                plt.axvspan(-1, transition, color='gray', alpha=0.2, label="Convective zone")
+                plt.axvspan(-1, transition, color="gray", alpha=0.2, label="Convective zone")
                 plt.legend(fontsize=16)                                                         # Leyend
-                plt.grid(which="major", linestyle='-', linewidth=1, visible=True)               # Major grid
-                plt.grid(which="minor", linestyle=':', linewidth=0.5, visible=True, alpha=0.5)  # Minor grid
+                plt.grid(which="major", linestyle="-", linewidth=1, visible=True)               # Major grid
+                plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True, alpha=0.5)  # Minor grid
 
         plt.show()
 
@@ -213,18 +213,17 @@ class Model:
             using the most efficient energy generation cycle.
             """
 
-            # Applying a temperature filter to the energy generation rate table
-            filter = (self.epsilon_df["Tmin"] <= T) & (T < self.epsilon_df["Tmax"])
-            epsilon_values = self.epsilon_df[filter].reset_index(drop=True)
-
-            # If the DataFrame is empty, fusion temperature has not been reached yet
-            if epsilon_values.empty:
+            # If fusion temperature has not been reached yet
+            if T < self.epsilon_df.iloc[0,1]:
                 return (0.0, 0.0, 0.0, 0.0, "--")
 
-            # Otherwise, the cycle that generates more energy should be taken
+            # Otherwise, only the cycle that generates more energy should be considered
             else:
+                # Applying a temperature filter to the energy generation rate table
+                filter = (self.epsilon_df["Tmin"] <= T) & (T < self.epsilon_df["Tmax"])
+                epsilon_values = self.epsilon_df[filter].reset_index(drop=True)
                 # Calcultaing epsilon, X1 and X2 for each row
-                epsilon_values[["epsilon", "X1", "X2"]] = epsilon_values.apply(lambda row: epsilon(self, P, T, row), axis=1, result_type='expand')
+                epsilon_values[["epsilon", "X1", "X2"]] = epsilon_values.apply(lambda row: epsilon(self, P, T, row), axis=1, result_type="expand")
                 # Selecting the row for which the energy generation rate is greater
                 index = epsilon_values["epsilon"].idxmax()
                 cycle, _, _, log10epsilon1, nu, _, X1, X2 = epsilon_values.loc[index].to_list()
@@ -525,7 +524,7 @@ class Model:
 
         def step10(self, n1):
             """
-            Given a value for the n+1 coeficient it tests it is smaller than 2.5.
+            Given a value for the n+1 coeficient it tests if it is smaller than 2.5.
             """
             return n1 <= 2.5
 
@@ -561,7 +560,7 @@ class Model:
         ################################################################################
 
         # Customizing the DataFrame options
-        pd.set_option('colheader_justify', 'center', "display.precision", 9, 'display.max_rows', 1000)
+        pd.set_option("colheader_justify", "center", "display.precision", 9, "display.max_rows", 1000)
 
         # Defining the DataFrames that will store the data
         outer = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "n+1"])
@@ -856,7 +855,7 @@ class Model:
 
             # Calculating and storing the values for the first three shells
             T = initial_surface_T(self, r)
-            P = np.real(initial_surface_P(self, r, T))    # Since r ~ Rtot, the programm crashes if we do not take the real part
+            P = np.real(initial_surface_P(self, r, T))    # Since r ~ Rtot, the program crashes if we do not take the real part
             M = self.Mtot
             L = self.Ltot
             outer.loc[i] = {"E":"--", "fase":"^^^^^^", "r":r, "P":P, "T":T, "L":L, "M":M, "rho":rho(self, P, T), "n+1":"-"}
