@@ -52,11 +52,11 @@ class Model:
         self.R = 8.31447 * 10**7
 
         # Defining the energy generation rate table using modified units (10e7 K)
-        self.epsilon_df = pd.DataFrame(data=[("pp", 0.40, 0.60, -6.84, 6.0),
-                                ("pp", 0.60, 0.95, -6.04, 5.0), 
-                                ("pp", 0.95, 1.20, -5.56, 4.5), 
-                                ("pp", 1.20, 1.65, -5.02, 4.0), 
-                                ("pp", 1.65, 2.40, -4.40, 3.5), 
+        self.epsilon_df = pd.DataFrame(data=[("PP", 0.40, 0.60, -6.84, 6.0),
+                                ("PP", 0.60, 0.95, -6.04, 5.0), 
+                                ("PP", 0.95, 1.20, -5.56, 4.5), 
+                                ("PP", 1.20, 1.65, -5.02, 4.0), 
+                                ("PP", 1.65, 2.40, -4.40, 3.5), 
                                 ("CN", 1.20, 1.60, -22.2, 20.0),
                                 ("CN", 1.60, 2.25, -19.8, 18.0), 
                                 ("CN", 2.25, 2.75, -17.1, 16.0), 
@@ -198,8 +198,8 @@ class Model:
             # Selecting the appropriate row parameters of the energy generation rate table
             cycle, _, _, log10epsilon1, nu = row.to_list()
 
-            # Depending on whether the cycle is 'pp' or 'CN', X1 and X2 change
-            if cycle == "pp":
+            # Depending on whether the cycle is 'PP' or 'CN', X1 and X2 change
+            if cycle == "PP":
                     X1, X2 = self.X, self.X
             elif cycle == "CN":
                     X1, X2 = self.X, self.Z/3
@@ -362,6 +362,17 @@ class Model:
         ################################################################################
         ################################################################################
 
+        # ---------------------------------- Step 1 ---------------------------------- #
+
+        def step1(self, shell, h):
+            """
+            Given the variables of the star for a shell it returns the value of the 
+            radius for the next shell.
+            """
+
+            return shell["r"] + h
+
+
         # ---------------------------------- Step 2 ---------------------------------- #
 
         def step2(self, shell, derivatives, h, i):
@@ -387,15 +398,14 @@ class Model:
 
         # ---------------------------------- Step 3 ---------------------------------- #
 
-        def step3(self, shell, derivatives, P, T, M, h, i):
+        def step3(self, shell, derivatives, r, P, T, M, h, i):
             """
-            Given the variables of the star for a shell, an estimation of pressure and
-            temperature for the next shell and the derivatives of the current and two 
-            previous shells it calculates the value of the mass and its derivative for 
-            the next shell.
+            Given the variables of the star for a shell, an estimation of radius, pressure,
+            and temperature for the next shell and the derivatives of the current and two 
+            previous shells it calculates the value of the mass and its derivative for the 
+            next shell.
             """
 
-            r = shell["r"] + h                       # r for the i+1 shell
             fM = dMdr_rad(self, r, P, T)             # fM for the i+1 shell
             AM1 = h * (fM - derivatives["fM"][i])    # AM1 for the i+1 shell
 
@@ -406,15 +416,14 @@ class Model:
 
         # ---------------------------------- Step 4 ---------------------------------- #
 
-        def step4(self, shell, derivatives, P, T, M, h, i):
+        def step4(self, shell, derivatives, r, P, T, M, h, i):
             """
-            Given the variables of the star for a shell, an estimation of pressure,
-            temperature and mass for the next shell and the derivatives of the current 
-            and two previous shells it calculates the value of the pressure and its 
-            derivative for the next shell.
+            Given the variables of the star for a shell, an estimation of radius, pressure,
+            temperature and mass for the next shell and the derivatives of the current and 
+            two previous shells it calculates the value of the pressure and its derivative 
+            for the next shell.
             """
 
-            r = shell["r"] + h                       # r for the i+1 shell
             fP = dPdr_rad(self, r, P, T, M)          # fP for the i+1 shell
             AP1 = h * (fP - derivatives["fP"][i])    # AP1 for the i+1 shell
             P = shell["P"]                           # P for the i shell
@@ -439,16 +448,15 @@ class Model:
 
         # ---------------------------------- Step 6 ---------------------------------- #
 
-        def step6(self, shell, derivatives, P, T, L, h, i):
+        def step6(self, shell, derivatives, r, P, T, L, h, i):
             """
-            Given the variables of the star for a shell, an estimation of pressure and
-            temperature for the next shell and the derivatives of the current and two 
+            Given the variables of the star for a shell, an estimation of radius, pressure 
+            and temperature for the next shell and the derivatives of the current and two 
             previous shells it calculates the value of the luminosity and its derivative 
             for the next shell. It also returns which energy generation cycle produces 
             the energy.
             """
 
-            r = shell["r"] + h                                                  # r for the i+1 shell
             fL, cycle = dLdr_rad(self, r, P, T)                                 # fL for the i+1 shell
             AL1 = h * (fL - derivatives["fL"][i])                               # AL1 for the i+1 shell
             AL2 = h * (fL - 2*derivatives["fL"][i] + derivatives["fL"][i-1])    # AL2 for the i+1 shell
@@ -460,15 +468,14 @@ class Model:
 
         # ---------------------------------- Step 7 ---------------------------------- #
 
-        def step7(self, shell, derivatives, P, T, L, h, i):
+        def step7(self, shell, derivatives, r, P, T, L, h, i):
             """
-            Given the variables of the star for a shell, an estimation of pressure,
-            temperature and luminosity for the next shell and the derivatives of the 
-            current and two previous shells it calculates the value of the temperature 
-            and its derivative for the next shell. 
+            Given the variables of the star for a shell, an estimation of radius, pressure,
+            temperature and luminosity for the next shell and the derivatives of the current 
+            and two previous shells it calculates the value of the temperature and its 
+            derivative for the next shell. 
             """
 
-            r = shell["r"] + h                       # r for the i+1 shell
             fT = dTdr_rad(self, r, P, T, L)          # fT for the i+1 shell
             AT1 = h * (fT - derivatives["fT"][i])    # AT1 for the i+1 shell
             T = shell["T"]                           # T for the i shell
@@ -480,14 +487,13 @@ class Model:
 
         # -------------------------------- Step 7 bis -------------------------------- #
 
-        def step7bis(self, shell, derivatives, M, h, i):
+        def step7bis(self, shell, derivatives, r, M, h, i):
             """
-            Given the variables of the star for a shell, an estimation of mass for the 
-            next shell and the derivatives of the current and two previous shells it 
+            Given the variables of the star for a shell, an estimation of radius and mass 
+            for the next shell and the derivatives of the current and two previous shells it 
             calculates the value of the temperature and its derivative for the next shell. 
             """
 
-            r = shell["r"] + h                       # r for the i+1 shell
             fT = dTdr_conv(self, r, M)               # fT for the i+1 shell
             AT1 = h * (fT - derivatives["fT"][i])    # AT1 for the i+1 shell
             T = shell["T"]                           # T for the i shell
@@ -599,65 +605,19 @@ class Model:
 
 
         ################################################################################
-        # -------------------------------- Fase A.1.1. ------------------------------- #
+        # --------------------------------- Fase A.1. -------------------------------- #
         ################################################################################
 
-        fase = "A.1.1."         # Current fase
+        fase = "RADIAT"         # Current fase
 
         while True:             # First loop
 
             # Values for the current shell and derivatives of the current and two previous shells
             shell = outer.loc[i]
             derivatives = outer_derivatives.loc[i-2:i]
-            # Performing the second step
-            P_est, T_est = step2(self, shell, derivatives, h, i)
 
-            while True:         # Second loop
-
-                while True:     # Third loop
-                    
-                    # Performing the fourth step
-                    P_cal, fP = step4(self, shell, derivatives, P_est, T_est, self.Mtot, h, i)
-                    # Performing the fifth step
-                    if stepX(self, P_cal, P_est):
-                        break   # Third loop break
-                    else:
-                        P_est = P_cal
-
-                # Performing the seventh step
-                T_cal, fT = step7(self, shell, derivatives, P_cal, T_est, self.Ltot, h, i)
-                # Performing the eighth step
-                if stepX(self, T_cal, T_est):
-                    break       # Second loop break
-                else:
-                    T_est = T_cal
-
-            # Performing the third step
-            M_cal, fM = step3(self, shell, derivatives, P_cal, T_cal, self.Mtot, h, i)
-            # Comparing the calculated mass with the total mass
-            if not stepX(self, M_cal, self.Mtot):
-                break           # First loop break
-            else:
-                # Storing values and derivatives (mass and luminosity remain constant)
-                r = shell["r"] + h
-                outer.loc[i+1] = {"E":"--", "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":self.Ltot, "M":self.Mtot, "rho":rho(self, P_cal, T_cal), "n+1":"-"}
-                outer_derivatives.loc[i+1] = {"fP":fP, "fT":fT, "fL":0.0, "fM":fM}
-
-                # Moving forward one step
-                i += 1
-
-
-        ################################################################################
-        # -------------------------------- Fase A.1.2. ------------------------------- #
-        ################################################################################
-
-        fase = "A.1.2."         # Current fase
-
-        while True:             # First loop
-
-            # Values for the current shell and derivatives of the current and two previous shells
-            shell = outer.loc[i]
-            derivatives = outer_derivatives.loc[i-2:i]
+            # Performing the first step
+            r = step1(self, shell, h)
             # Performing the second step
             P_est, T_est = step2(self, shell, derivatives, h, i)
 
@@ -666,60 +626,9 @@ class Model:
                 while True:     # Third loop
                     
                     # Performing the third step
-                    M_cal, fM = step3(self, shell, derivatives, P_est, T_est, shell["M"], h, i)
+                    M_cal, fM = step3(self, shell, derivatives, r, P_est, T_est, shell["M"], h, i)
                     # Performing the fourth step
-                    P_cal, fP = step4(self, shell, derivatives, P_est, T_est, M_cal, h, i)
-                    # Performing the fifth step
-                    if stepX(self, P_cal, P_est):
-                        break   # Third loop break
-                    else:
-                        P_est = P_cal
-
-                # Performing the seventh step
-                T_cal, fT = step7(self, shell, derivatives, P_cal, T_est, self.Ltot, h, i)
-                # Performing the eighth step
-                if stepX(self, T_cal, T_est):
-                    break       # Second loop break
-                else:
-                    T_est = T_cal
-
-            # Performing the sixth step
-            L_cal, fL, _ = step6(self, shell, derivatives, P_cal, T_cal, self.Ltot, h, i)
-            # Comparing the calculated luminosity with the total luminosity
-            if not stepX(self, L_cal, self.Ltot):
-                break           # First loop break
-            else:
-                # Storing values and derivatives (luminosity ramains constant)
-                r = shell["r"] + h
-                outer.loc[i+1] = {"E":"--", "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":self.Ltot, "M":M_cal, "rho":rho(self, P_cal,T_cal), "n+1":"-"}
-                outer_derivatives.loc[i+1] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
-
-                # Moving forward one step
-                i += 1
-
-
-        ################################################################################
-        # -------------------------------- Fase A.1.3. ------------------------------- #
-        ################################################################################
-
-        fase = "A.1.3."         # Current fase
-
-        while True:             # First loop
-
-            # Values for the current shell and derivatives of the current and two previous shells
-            shell = outer.loc[i]
-            derivatives = outer_derivatives.loc[i-2:i]
-            # Performing the second step
-            P_est, T_est = step2(self, shell, derivatives, h, i)
-
-            while True:         # Second loop
-
-                while True:     # Third loop
-                    
-                    # Performing the third step
-                    M_cal, fM = step3(self, shell, derivatives, P_est, T_est, shell["M"], h, i)
-                    # Performing the fourth step
-                    P_cal, fP = step4(self, shell, derivatives, P_est, T_est, M_cal, h, i)
+                    P_cal, fP = step4(self, shell, derivatives, r, P_est, T_est, M_cal, h, i)
                     # Performing the fifth step
                     if stepX(self, P_cal, P_est):
                         break   # Third loop break
@@ -727,14 +636,15 @@ class Model:
                         P_est = P_cal
 
                 # Performing the sixth step
-                L_cal, fL, cycle = step6(self, shell, derivatives, P_cal, T_est, shell["L"], h, i)
+                L_cal, fL, cycle = step6(self, shell, derivatives, r, P_cal, T_est, shell["L"], h, i)
                 # Performing the seventh step
-                T_cal, fT = step7(self, shell, derivatives, P_cal, T_est, L_cal, h, i)
+                T_cal, fT = step7(self, shell, derivatives, r, P_cal, T_est, L_cal, h, i)
                 # Performing the eighth step
                 if stepX(self, T_cal, T_est):
                     break       # Second loop break
                 else:
                     T_est = T_cal
+                    P_est = P_cal
 
             # Performing the ninth step
             n1 = step9(self, P_cal, T_cal, fP, fT)
@@ -744,7 +654,6 @@ class Model:
                 break           # First loop break
             else:
                 # Storing values and derivatives
-                r = shell["r"] + h
                 outer.loc[i+1] = {"E":cycle, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "rho":rho(self, P_cal, T_cal), "n+1":n1}
                 outer_derivatives.loc[i+1] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
 
@@ -801,6 +710,9 @@ class Model:
             # Values for the current shell and derivatives of the current and two previous shells
             shell = inside.loc[i]
             derivatives = inside_derivatives.loc[i-2:i]
+
+            # Performing the first step
+            r = step1(self, shell, h)
             # Performing the second step bis
             _, T_est = step2(self, shell, derivatives, h, i)
 
@@ -809,12 +721,12 @@ class Model:
                 # Estimating pressure using the polytrope constant
                 P_est = polytrope(self, K, T_est)
                 # Performing the third step
-                M_cal, fM = step3(self, shell, derivatives, P_est, T_est, shell["M"], h, i)
+                M_cal, fM = step3(self, shell, derivatives, r, P_est, T_est, shell["M"], h, i)
                 # Performing the seventh step bis
                 if shell["r"] + h < 1e-6:           # Very small values are considered zero
                     T_cal = T_est
                 elif shell["r"] + h > 0.0:
-                    T_cal, fT = step7bis(self, shell, derivatives, M_cal, h, i)
+                    T_cal, fT = step7bis(self, shell, derivatives, r, M_cal, h, i)
                 # Performing the eighth step
                 if stepX(self, T_cal, T_est):
                     break       # Loop break
@@ -824,9 +736,8 @@ class Model:
             # Calculating pressure using the polytrope constant
             P_cal = polytrope(self, K, T_cal)
             # Performing the sixth step
-            L_cal, fL, cycle = step6(self, shell, derivatives, P_cal, T_cal, shell["L"], h, i)
-            # Calculating the radius for the i+1 shell and the derivative of the pressure for the i shell
-            r = shell["r"] + h
+            L_cal, fL, cycle = step6(self, shell, derivatives, r, P_cal, T_cal, shell["L"], h, i)
+            # Calculating the derivative of the pressure for the i shell
             fP = dPdr_conv(self, r, T_cal, M_cal, K)
             # Storing values and derivatives
             inside.loc[i+1] = {"E":cycle, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "rho":rho(self, P_cal, T_cal), "n+1":"-"}
