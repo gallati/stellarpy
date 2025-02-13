@@ -5,7 +5,7 @@
  - Author: **Nuno Cerviño Luridiana**
  - Last update: February, 2025
 
-**Technology:** `Python`, `Jupyter notebook`, `numerical methods`
+**Technology:** `Python`, `numerical methods`
 
 
 # Installation
@@ -90,7 +90,7 @@ In order to properly estimate the variables of the star, the unit system adopted
 
 Let us compute the value of the stellar-interior variables for a star with the follwing parameters:
 
-$$M = 2.51\,M_\odot \quad R = 1.59\,R_\odot \quad L = 19.76\,L_\odot \quad T_c = 1.9554\cdot10^7\,\text{K}$$
+$$M = 2.51 M_\odot \quad R = 1.59 R_\odot \quad L = 19.76 L_\odot \quad T_c = 1.9554\cdot10^7 \text{K}$$
 
 To do so, the `Model` object is initialized as shown.
 
@@ -109,7 +109,7 @@ print(Teff)
 [Output] 0.0005125238763055535
 ```
 
-Which leads us to the result $T_{\text{eff}}=5125\,\text{K}$
+Which leads us to the result $T_{\text{eff}}=5125 \text{K}$
 
 For the visualization of variables throughout the star the `visualize()` method is needed.
 
