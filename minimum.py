@@ -3,7 +3,7 @@ from model import Model
 import matplotlib.pyplot as plt
 from scipy import optimize
 
-def error_table(n, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0, dR=0.5, dL=5.0):
+def error_table(n, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0, dR=0.5, dL=5.0, tol=0.01):
     """
     Table containing the total relative error for total luminosity and total radius variations.
     Given the initial values of a model, it computes the smaller total relative error for variations
@@ -24,7 +24,7 @@ def error_table(n, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0, dR=0.5, dL=5.0):
     L = [Ltot + i*dL for i in range(-n, n+1)]
 
     # Defining the error matrix
-    error_matrix = np.array([[optimize.minimize(lambda x: Model(Mtot=Mtot, Rtot=r, Ltot=l, Tc=x[0]).error(), x0=Tc, tol=0.01).x[0] for r in R] for l in L])
+    error_matrix = np.array([[optimize.minimize(lambda x: Model(Mtot=Mtot, Rtot=r, Ltot=l, Tc=x[0]).error(), x0=Tc, tol=tol).x[0] for r in R] for l in L])
     # error_matrix = np.array([[Model(Mtot=Mtot, Rtot=r, Ltot=l, Tc=Tc).error() for r in R] for l in L])
 
     # Customizing the plot

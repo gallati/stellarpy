@@ -6,7 +6,7 @@ import numpy as np
 class Model:
     """
     Stellar-interior numerical model. Object that once initializated estimates the
-    numerical values of radius, pressure, temperature, mass, luminosity and density
+    numerical value of radius, pressure, temperature, mass, luminosity and density
     throughout a star with given initial parameters.
     
     ## Parameters
@@ -73,10 +73,28 @@ class Model:
     def __str__(self):
         return self.model.to_string()
     
+    # Defining the get method
+    def get(self, variable="all"):
+        """
+        Function to access variables.
+        
+        ## Parameters
+            * variable (string, default = 'all'): 
+
+            If default ('all'), a Data Frame object is returned containing the calculated 
+            values of the variables. For queries on specific variables you must enter one
+            of the following strings: 'r', 'P', 'T', 'L', 'M' and 'rho'
+        """
+        if variable == "all":
+            return self.model
+        else:
+            return self.model[variable]
+            
+    
     # Defining the error method
     def error(self):
         """
-        Return total relative error of the numerical calculation of the star-interior 
+        Returns total relative error of the numerical calculation of the star-interior 
         model.
         """
         return self.totalRelativeError
@@ -87,15 +105,17 @@ class Model:
         Function to graph the calculated variables.
 
         ## Parameters
-            * x_axis (string, default = 'r'): \\ 
+            * x_axis (string, default = 'r'): 
+
             String to select the independent variable of the plot. It can only be one of
             the variables calculated with the model: 'r', 'P', 'T', 'L', 'M' and 'rho'.
 
-            * which (array-like, default = ['P', 'T', 'L', 'M', 'rho']): \\
+            * which (array-like, default = ['P', 'T', 'L', 'M', 'rho']): 
+
             Array-like containing the dependent variables desirable to plot in string format.
             Supports the same values as x_axis: 'r', 'P', 'T', 'L', 'M' and 'rho'.
 
-            * merge (bool, default = False): \\
+            * merge (bool, default = False): 
             If True, it plots all variables specified in 'which' normalized in the same figure.
             If False, it plots all variables specified in 'which' without normalizing in
             different figures.
