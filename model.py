@@ -269,7 +269,7 @@ class Model:
             Equation (19)
             """
             Cp = 8.084*self.mu
-            return - Cp * P*M / (T*r**2)
+            return - Cp * P * M / (T * (r**2))
 
         def dLdr_rad(self, r, P, T):
             """
@@ -586,7 +586,8 @@ class Model:
         ################################################################################
 
         # Customizing the DataFrame options
-        pd.set_option("colheader_justify", "center", "display.precision", 9, "display.max_rows", 1000)
+        pd.set_option("colheader_justify", "center", "display.max_rows", 1000)
+        pd.options.display.float_format = '{:.7f}'.format
 
         # Defining the DataFrames that will store the data
         outer = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "n+1"])
@@ -599,10 +600,11 @@ class Model:
         # ----------------------- First three shells (surface) ----------------------- #
         ################################################################################
 
-        Rini = 0.9*self.Rtot        # Defining the initial radius
-        totalShells = 100           # Setting the total number of shells
-        h = - Rini/totalShells      # Defining the radius step between shells
-        r = Rini                    # Initializing the radius variable
+        Rini = 0.9*self.Rtot            # Defining the initial radius
+        shellBreaks = 100               # Setting the shell partition of Rini
+        innerShells = shellBreaks + 1   # Setting the number of shells from Rini
+        h = - Rini/shellBreaks          # Defining the radius step between shells (negative)
+        r = Rini                        # Initializing the radius variable
 
         for i in range(3):
 
@@ -670,7 +672,6 @@ class Model:
             n1 = step9(self, P_cal, T_cal, fP, fT)
             # Performing the tenth step
             if step10(self, n1):
-                K = K_pol(self, P_cal, T_cal)    # Calculating the polytrope coefficient for the i+1 shell (Fase A.2.)
                 break           # First loop break
             else:
                 # Storing values and derivatives
@@ -681,30 +682,30 @@ class Model:
                 i += 1
 
         # Storing how many shells are left to compute
-        convec_index = (totalShells+1) - len(outer)
+        convec_index = innerShells - len(outer)
 
 
         ################################################################################
         # --------------------------------- Fase A.2. -------------------------------- #
         ################################################################################
 
-        # Unnecessary calculations
-
+        # Unnecesary calculations
 
         ################################################################################
         # ------------------------- First three shells (center) ---------------------- #
         ################################################################################
-
-        h = Rini/totalShells    # Defining the radius step between shells
-        r = 0.0                 # Initializing the radius variable
-
+        
+        h = Rini/shellBreaks            # Defining the radius step between shells (positive)
+        r = 0.0                         # Initializing the radius variable
+        K = K_pol(self, P_cal, T_cal)   # Calculating the polytrope coefficient        
+        
         for i in range(3):
 
             # Calculating and storing the values for the first three shells
             T = initial_center_T(self, r, K)
             P = initial_center_P(self, r, T, K)
-            M = initial_center_M(self, r, T, K)
-            L, _ = initial_center_L(self, r, P, T, K)
+            M = initial_center_M(self, r, self.Tc, K)
+            L, _ = initial_center_L(self, r, P, self.Tc, K)
             inside.loc[i] = {"E":"--", "fase":"CENTRO", "r":r, "P":P, "T":T, "L":L, "M":M, "rho":rho(self, P ,T), "n+1":"-"}
 
             # Calculating and storing the derivatives for the first three shells
@@ -770,8 +771,8 @@ class Model:
         rad = np.array(outer.loc[len(outer)-1, "P":"M"].to_list(), dtype=float)
         conv = np.array(inside.loc[len(inside)-1, "P":"M"].to_list(), dtype=float)
 
-        # Redefining inside dataframe index so r=0.0 corresponds to i=totalShells
-        inside.index = range(totalShells, totalShells - convec_index - 1, -1)
+        # Redefining inside dataframe index so r=0.0 corresponds to i=shellBreaks
+        inside.index = range(shellBreaks, shellBreaks - convec_index - 1, -1)
 
 
         ################################################################################
