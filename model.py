@@ -39,17 +39,17 @@ class Model:
     def __init__(self, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0):
 
         # Variable parameters
-        self.Mtot = Mtot
-        self.Rtot = Rtot
-        self.Ltot = Ltot
-        self.Tc = Tc
+        self.Mtot = Mtot                                # Total mass of the star
+        self.Rtot = Rtot                                # Total radius of the star
+        self.Ltot = Ltot                                # Total luminosity of the star
+        self.Tc = Tc                                    # Central temperature of the star
 
         # Constant parameters
-        self.X = 0.75
-        self.Y = 0.22
-        self.Z = 1 - self.X - self.Y
-        self.mu = 1/(2*self.X + 3*self.Y/4 + self.Z/2)
-        self.R = 8.31447 * 10**7
+        self.X = 0.75                                   # Fraction of mass in H
+        self.Y = 0.22                                   # Fraction of mass in He
+        self.Z = 1 - self.X - self.Y                    # Metalicity
+        self.mu = 1/(2*self.X + 3*self.Y/4 + self.Z/2)  # Mean molecular weight
+        self.R = 8.31447 * 10**7                        # Universal gas constant
 
         # Defining the energy generation rate table using modified units (10e7 K)
         self.epsilon_df = pd.DataFrame(data=[("PP", 0.40, 0.60, -6.84, 6.0),
@@ -89,7 +89,6 @@ class Model:
             return self.model
         else:
             return self.model[variable]
-            
     
     # Defining the error method
     def error(self):
@@ -99,8 +98,8 @@ class Model:
         """
         return self.totalRelativeError
 
-    # Defining the plot method
-    def visualize(self, x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False):
+    # Defining the plot method for star variables
+    def visualize(self, x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False, figsize=(10, 7)):
         """
         Function to graph the calculated variables.
 
@@ -121,11 +120,8 @@ class Model:
             different figures.
         """
 
-        # Changing font, colors and figure size
+        # Changing font and figure size
         plt.rcParams["font.family"] = "serif"
-        # plt.style.use("tableau-colorblind10")
-        # 'classic' 'grayscale' 'seaborn-v0_8-colorblind' 'seaborn-v0_8-dark-palette' 'seaborn-v0_8-muted'
-        figSize = (10, 7)
         
         # Defining titles and labels for each variable 
         plots = pd.DataFrame(data=[("Radius", "r / $10^{10}$ cm"),
@@ -142,17 +138,19 @@ class Model:
 
         # All curves in the same figure (normalized plots)
         if merge:
-            plt.figure(figsize=figSize)
+            plt.figure(figsize=figsize)
             for variable in which:
                 plt.plot(self.model[x_axis], self.model[variable]/self.model[variable].max(), label=plots.loc[variable]["title"], linewidth=1.5)
 
             # Customizing the plot
-            plt.title("Stellar-interior model", fontsize=20)          # Title
-            plt.xlabel(plots.loc[x_axis]["label"], fontsize=16)       # x axis label
-            plt.ylabel("Normalized magnitude", fontsize=16)           # y axis label
-            plt.tick_params(axis="both", labelsize=14, length=10)     # Numbering size
-            plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))   # Minor ticks (x axis)
-            plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))   # Minor ticks (y axis)
+            plt.title("Stellar-interior model", fontsize=20)                    # Title
+            plt.xlabel(plots.loc[x_axis]["label"], fontsize=16)                 # x axis label
+            plt.ylabel("Normalized magnitude", fontsize=16)                     # y axis label
+            plt.tick_params(axis="both", labelsize=14)                          # Numbering size
+            plt.gca().tick_params(direction="in", which="major", length=8)      # Major ticks size and orientation
+            plt.gca().tick_params(direction="in", which="minor", length=3)      # Minor ticks size and orientation
+            plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (x axis)
+            plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (y axis)
             
             # Marking the convective zone of the star
             plt.axvspan(-1, transition, color="gray", alpha=0.2, label="Convective zone")
@@ -163,22 +161,102 @@ class Model:
         # Curves in different figures (without normalization)
         else:
             for variable in which:
-                plt.figure(figsize=figSize)
+                plt.figure(figsize=figsize)
                 plt.plot(self.model[x_axis], self.model[variable], color="k", linewidth=1.5)
 
                 # Customizing the plots for each figure
-                plt.title(plots.loc[variable]["title"], fontsize=20)      # Title
-                plt.xlabel(plots.loc[x_axis]["label"], fontsize=16)       # x axis label
-                plt.ylabel(plots.loc[variable]["label"], fontsize=16)     # y axis label
-                plt.tick_params(axis="both", labelsize=14, length=10)   # Numbering size
-                plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))   # Minor ticks (x axis)
-                plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))   # Minor ticks (y axis)
+                plt.title(plots.loc[variable]["title"], fontsize=20)                # Title
+                plt.xlabel(plots.loc[x_axis]["label"], fontsize=16)                 # x axis label
+                plt.ylabel(plots.loc[variable]["label"], fontsize=16)               # y axis label
+                plt.tick_params(axis="both", labelsize=14)                          # Numbering size
+                plt.gca().tick_params(direction="in", which="major", length=8)      # Major ticks size and orientation
+                plt.gca().tick_params(direction="in", which="minor", length=3)      # Minor ticks size and orientation
+                plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (x axis)
+                plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (y axis)
 
                 # Marking the convective zone of the star for each figure
                 plt.axvspan(-1, transition, color="gray", alpha=0.2, label="Convective zone")
                 plt.legend(fontsize=16)                                                         # Leyend
                 plt.grid(which="major", linestyle="-", linewidth=1, visible=True)               # Major grid
                 plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True, alpha=0.5)  # Minor grid
+
+        plt.show()
+
+    # Defining the Temperature-Density Diagram method
+    def TDD(self, figsize=(8,7)):
+        """
+        I: ideal gas
+        II: degeneracy
+        III: relativistic degeneracy
+        IV: radiation pressure
+
+        """
+
+        # Defining fundamental constants and star constants
+        a = 7.56578e-15         # Radiation density constant
+        mu_e = 2/(1+self.X)     # Mean molecular electron weight
+
+        # Selecting T and rho
+        T = np.log10(self.get("T")*1e7)       # Star log10 temperature in K
+        rho = np.log10(self.get("rho"))       # Star log10 density in g/cm^3
+
+        # Changing font and figure size. Setting the plot limits
+        plt.rcParams["font.family"] = "serif"
+        plt.figure(figsize=figsize)
+        xlims = [min(T) / 1.1, 10]
+        ylims = [min(rho) * 1.1, 10.5]
+
+        # Defining polytropic constants
+        K0 = self.R/self.mu                 # Ideal gas polytrope constant
+        K1 = (1.0036e13)/(mu_e**(5/3))      # Degeneracy polytrope constant
+        K2 = (1.2435e15)/(mu_e**(4/3))      # Relativistic degeneracy polytrope constant
+        K3 = a/3                            # Radiation pressure polytrope constant
+
+        # Defining transition zones
+        logT_1_2 = np.array([xlims[0], 9], dtype=float)             # Ideal gas - Degeneracy (x axis)
+        logT_1_3 = np.array([9, xlims[1]], dtype=float)             # Ideal gas - Relativistic degeneracy (x axis)
+        logT_2_3 = np.array([xlims[0], xlims[1]], dtype=float)      # Degeneracy - Relativistic degeneracy (x axis)
+
+        logrho_I_II = 1.5*np.log10(K0/K1) + 1.5*logT_1_2            # Ideal gas - Degeneracy (y axis)
+        logrho_I_III = 3*np.log10(K0/K2) + 3*logT_1_3               # Ideal gas - Relativistic degeneracy (y axis)
+        logrho_II_III = 3*np.log10(K2/K1)*np.ones((2,))             # Degeneracy - Relativistic degeneracy (y axis)
+        logrho_I_IV = np.log10(K3/(10*K0)) + 3*logT_2_3             # Ideal gas - Radiation pressure (y axis)
+
+        # Graphing the transition zones
+        plt.plot(logT_1_2, logrho_I_II, color = "k", linestyle="solid")             # Ideal gas - Degeneracy
+        plt.plot(logT_1_3, logrho_I_III, color = "k", linestyle="solid")            # Ideal gas - Relativistic degeneracy
+        plt.plot(logT_1_2, logrho_II_III, color = "k", linestyle="solid")           # Ideal gas - Radiation pressure
+        plt.plot(logT_2_3, logrho_I_IV, color = "k", linestyle="solid")             # Degeneracy - Relativistic degeneracy
+        # Fillin between the transition zones
+        plt.fill_between(logT_2_3, logrho_I_IV, ylims[1], color="#d9d9d9")          # Ideal gas
+        plt.fill_between(logT_2_3, logrho_I_IV, ylims[0], color="#f2f2f2")          # Radiation pressure
+        plt.fill_between(logT_1_2, logrho_I_II, logrho_II_III, color="#a6a6a6")     # Degeneracy
+        plt.fill_between(logT_1_2, logrho_II_III, ylims[1], color="#5c5c5c")        # Relativistic degeneracy
+        plt.fill_between(logT_1_3, logrho_I_III, ylims[1], color="#5c5c5c")         # Relativistic degeneracy
+
+        # Adding text to the plot
+        plt.text(0.10, 0.30, "Ideal gas", transform=plt.gca().transAxes, fontsize=12, color="brown")
+        plt.text(0.15, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=12, color="brown")
+        plt.text(0.25, 0.90, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=12, color="brown")
+        plt.text(0.65, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=12, color="brown")
+
+        # Graphing the star variables in the diagram
+        plt.plot(T, rho, color="#006769")
+        plt.scatter(max(T), max(rho), s=60, color="#006769", marker="o", label="Star center")
+        plt.scatter(min(T), min(rho), s=60, color="#006769", marker="d", label="Star surface")
+
+        # Adding title and labels. Setting the ticks parameters
+        plt.title("Temperature-Density Diagram", fontsize=20)               # Title
+        plt.xlabel("Log [T(K)]", fontsize=16)                               # x axis label
+        plt.ylabel("Log [$\\rho$ / g cm$^{-3}$]", fontsize=16)              # y axis label
+        plt.tick_params(axis="both", labelsize=14)                          # Numbering size
+        plt.gca().tick_params(direction="in", which="major", length=8)      # Major ticks size and orientation
+        plt.gca().tick_params(direction="in", which="minor", length=3)      # Minor ticks size and orientation
+        plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))             # Setting minor ticks (x axis)
+        plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))             # Setting minor ticks (y axis)
+        plt.xlim(xlims)                                                     # x limits
+        plt.ylim(ylims)                                                     # y limits
+        plt.legend(loc="upper right", fontsize=14)                          # Legend
 
         plt.show()
 
