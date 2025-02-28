@@ -71,13 +71,25 @@ Several built-in methods are provided for the `Model` object.
 
     * `merge` (bool, default = False): If True, it plots all variables specified in 'which' normalized in the same figure. If False, it plots all variables specified in 'which' without normalizing in different figures.
 
+    * `solar_units` (bool, default = True): If True, all plots will be graphed using solar units. If False, all plots will be graphed using the model units.
+
+    * `figsize` (two-dimensional array-like, default = (10, 7)): Two-dimensional array-like for a better customization on the figures size.
+
+* `TDD()`
+
+    Function to plot the Temperature-Density Diagram, i.e. the values throughout the star for temperature and density. Several regions are distinguished depending on the dominant pressure:
+
+    I: ideal gas. II: degeneracy. III: relativistic degeneracy. IV: radiation pressure.
+
+    * `figsize` (two-dimensional array-like, default = (10, 7)): Two-dimensional array-like for a better customization on the figures size.
+
 
 ## Units
 
 In order to properly estimate the variables of the star, the unit system adopted for parameter input and results interpretation varies with respect to CGS.
 
     radius (r)                         ->   1e10 cm
-    pressure (P)                       ->   1e15 din cm^-2
+    pressure (P)                       ->   1e15 dyn cm^-2
     temperature (T)                    ->   1e7 K
     mass (M)                           ->   1e33 g
     luminosity (L)                     ->   1e33 erg s^-1

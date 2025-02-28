@@ -18,7 +18,7 @@ class Model:
     ## Methods
         * error() : function that returns the total relative error of the numerical 
         calculation.
-        * visualize(x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False) : 
+        * visualize(x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False, solar_units=True, figsize=(10, 7)) : 
         function that enables the graphical representation of the calculated variables.
 
     ## Units
@@ -26,7 +26,7 @@ class Model:
     for parameter input and results interpretation varies with respect to CGS.
 
     * radius (r)                         ->   1e10 cm
-    * pressure (P)                       ->   1e15 din cm^-2
+    * pressure (P)                       ->   1e15 dyn cm^-2
     * temperature (T)                    ->   1e7 K
     * mass (M)                           ->   1e33 g
     * luminosity (L)                     ->   1e33 erg s^-1
@@ -99,7 +99,7 @@ class Model:
         return self.totalRelativeError
 
     # Defining the plot method for star variables
-    def visualize(self, x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False, figsize=(10, 7)):
+    def visualize(self, x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False, solar_units=True, figsize=(10, 7)):
         """
         Function to graph the calculated variables.
 
@@ -109,29 +109,71 @@ class Model:
             String to select the independent variable of the plot. It can only be one of
             the variables calculated with the model: 'r', 'P', 'T', 'L', 'M' and 'rho'.
 
+
             * which (array-like, default = ['P', 'T', 'L', 'M', 'rho']): 
 
             Array-like containing the dependent variables desirable to plot in string format.
             Supports the same values as x_axis: 'r', 'P', 'T', 'L', 'M' and 'rho'.
 
-            * merge (bool, default = False): 
+
+            * merge (bool, default = False):
+
             If True, it plots all variables specified in 'which' normalized in the same figure.
             If False, it plots all variables specified in 'which' without normalizing in
             different figures.
+
+
+            * solar_units (bool, default = True)
+
+            If True, all plots will be graphed using solar units.
+            If False, all plots will be graphed using the model units.
+
+
+            * figsize (two-dimensional array-like, default = (10, 7))
+
+            Two-dimensional array-like for a better customization on the figures size.
         """
 
-        # Changing font and figure size
+        # Changing font
         plt.rcParams["font.family"] = "serif"
+
+        # Solar units are used
+        if solar_units:
+            # Defining sun parameters
+            Msun = 1.9884    # 1e33 g
+            Rsun = 6.957     # 1e10 cm
+            Lsun = 3.842     # 1e33 erg s^-1
+            # Redefining model units
+            modelData = self.model
+            modelData["r"] = modelData["r"] / Rsun  # cm
+            modelData["P"] = modelData["P"] * 1e15  # dyn cm^-2
+            modelData["T"] = modelData["T"] * 1e7   # K
+            modelData["M"] = modelData["M"] / Msun  # g
+            modelData["L"] = modelData["L"] / Lsun  # erg s^-1
+
+            # Defining titles and labels for each variable 
+            plots = pd.DataFrame(data=[("Radius", "r / R$_{\\odot}$"),
+                                    ("Pressure", "P / dyn cm$^{-2}$"), 
+                                    ("Temperature", "T / K"),
+                                    ("Luminosity", "L / L$_{\\odot}$"),
+                                    ("Mass", "M / M$_{\\odot}$"),
+                                    ("Density", "$\\rho$ / g cm$^{-3}$")],
+                                columns=["title", "label"],
+                                index=["r", "P", "T", "L", "M", "rho"])
         
-        # Defining titles and labels for each variable 
-        plots = pd.DataFrame(data=[("Radius", "r / $10^{10}$ cm"),
-                                ("Pressure", "P / $10^{15}$ din cm$^{-2}$"), 
-                                ("Temperature", "T / $10^{7}$ K"),
-                                ("Luminosity", "L / $10^{33}$ erg s$^{-1}$"),
-                                ("Mass", "M / $10^{33}$ g"),
-                                ("Density","$\\rho$ / g cm$^{-3}$")],
-                            columns=["title", "label"],
-                            index=["r", "P", "T", "L", "M", "rho"])
+        # Model units are used
+        else:
+            # Using model units
+            modelData = self.model
+            # Defining titles and labels for each variable 
+            plots = pd.DataFrame(data=[("Radius", "r / $10^{10}$ cm"),
+                                    ("Pressure", "P / $10^{15}$ dyn cm$^{-2}$"), 
+                                    ("Temperature", "T / $10^{7}$ K"),
+                                    ("Luminosity", "L / $10^{33}$ erg s$^{-1}$"),
+                                    ("Mass", "M / $10^{33}$ g"),
+                                    ("Density","$\\rho$ / g cm$^{-3}$")],
+                                columns=["title", "label"],
+                                index=["r", "P", "T", "L", "M", "rho"])
 
         # Calculating the x value for which the transition to the convective zone occurs
         transition = self.model[self.model["fase"] == "CONVEC"].iloc[0][x_axis] 
@@ -185,11 +227,15 @@ class Model:
     # Defining the Temperature-Density Diagram method
     def TDD(self, figsize=(8,7)):
         """
-        I: ideal gas
-        II: degeneracy
-        III: relativistic degeneracy
-        IV: radiation pressure
+        Function to plot the Temperature-Density Diagram, i.e. the values throughout the star for
+        temperature and density. Several regions are distinguished depending on the dominant pressure.
 
+        I: ideal gas. II: degeneracy. III: relativistic degeneracy. IV: radiation pressure.
+
+        ## Parameters
+            * figsize (two-dimensional array-like, default = (10, 7))
+
+            Two-dimensional array-like for a better customization on the figures size.
         """
 
         # Defining fundamental constants and star constants
@@ -248,7 +294,7 @@ class Model:
         # Adding title and labels. Setting the ticks parameters
         plt.title("Temperature-Density Diagram", fontsize=20)               # Title
         plt.xlabel("Log [T(K)]", fontsize=16)                               # x axis label
-        plt.ylabel("Log [$\\rho$ / g cm$^{-3}$]", fontsize=16)              # y axis label
+        plt.ylabel("Log [$\\rho$(g cm$^{-3})$]", fontsize=16)               # y axis label
         plt.tick_params(axis="both", labelsize=14)                          # Numbering size
         plt.gca().tick_params(direction="in", which="major", length=8)      # Major ticks size and orientation
         plt.gca().tick_params(direction="in", which="minor", length=3)      # Minor ticks size and orientation
@@ -260,6 +306,9 @@ class Model:
 
         plt.show()
 
+    # Defining the Hertzsprung–Russell Diagram method
+    def HRD(self):
+        ...
 
     def _calculate(self):
 
