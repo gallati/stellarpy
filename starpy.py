@@ -3,7 +3,7 @@ from matplotlib.ticker import AutoMinorLocator
 import pandas as pd
 import numpy as np
 
-class Model:
+class Star:
     """
     Stellar-interior numerical model. Object that once initializated estimates the
     numerical value of radius, pressure, temperature, mass, luminosity and density
@@ -14,6 +14,8 @@ class Model:
         * Rtot (float, default = 11.5) : total radius of the star.
         * Ltot (float, default = 70.0) : total luminosity of the star.
         * Tc (float, default = 2.0) : central temperature of the star.
+        * X (float, default = 0.75) :  fraction of star mass in H.
+        * Y (float, default = 0.22 : fraction of mass in He.
 
     ## Methods
         * error() : function that returns the total relative error of the numerical 
@@ -36,7 +38,7 @@ class Model:
     """
 
     # Model initializer
-    def __init__(self, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0):
+    def __init__(self, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0, X=0.75, Y=0.22):
 
         # Variable parameters
         self.Mtot = Mtot                                # Total mass of the star
@@ -45,27 +47,13 @@ class Model:
         self.Tc = Tc                                    # Central temperature of the star
 
         # Constant parameters
-        self.X = 0.75                                   # Fraction of mass in H
-        self.Y = 0.22                                   # Fraction of mass in He
+        self.X = X                                      # Fraction of star mass in H
+        self.Y = Y                                      # Fraction of star mass in He
         self.Z = 1 - self.X - self.Y                    # Metalicity
         self.mu = 1/(2*self.X + 3*self.Y/4 + self.Z/2)  # Mean molecular weight
-        self.R = 8.31447 * 10**7                        # Universal gas constant
-
-        # Defining the energy generation rate table using modified units (10e7 K)
-        self.epsilon_df = pd.DataFrame(data=[("PP", 0.40, 0.60, -6.84, 6.0),
-                                ("PP", 0.60, 0.95, -6.04, 5.0), 
-                                ("PP", 0.95, 1.20, -5.56, 4.5), 
-                                ("PP", 1.20, 1.65, -5.02, 4.0), 
-                                ("PP", 1.65, 2.40, -4.40, 3.5), 
-                                ("CN", 1.20, 1.60, -22.2, 20.0),
-                                ("CN", 1.60, 2.25, -19.8, 18.0), 
-                                ("CN", 2.25, 2.75, -17.1, 16.0), 
-                                ("CN", 2.75, 3.60, -15.6, 15.0), 
-                                ("CN", 3.60, 5.00, -12.5, 13.0) ], 
-                            columns=["Cycle", "Tmin", "Tmax", "log10(epsilon1)", "nu"])
 
         # Calculating the model variables
-        self._calculate()
+        self.model, self.totalRelativeError = self._calculate()
 
     # Defining the print instruction
     def __repr__(self):
@@ -239,8 +227,9 @@ class Model:
         """
 
         # Defining fundamental constants and star constants
-        a = 7.56578e-15         # Radiation density constant
-        mu_e = 2/(1+self.X)     # Mean molecular electron weight
+        R = 8.31447 * 10**7             # Universal gas constant
+        a = 7.56578e-15                 # Radiation density constant
+        mu_e = 2/(1+self.X)             # Mean molecular electron weight
 
         # Selecting T and rho
         T = np.log10(self.get("T")*1e7)       # Star log10 temperature in K
@@ -253,7 +242,7 @@ class Model:
         ylims = [min(rho) * 1.1, 10.5]
 
         # Defining polytropic constants
-        K0 = self.R/self.mu                 # Ideal gas polytrope constant
+        K0 = R/self.mu                      # Ideal gas polytrope constant
         K1 = (1.0036e13)/(mu_e**(5/3))      # Degeneracy polytrope constant
         K2 = (1.2435e15)/(mu_e**(4/3))      # Relativistic degeneracy polytrope constant
         K3 = a/3                            # Radiation pressure polytrope constant
@@ -288,8 +277,8 @@ class Model:
 
         # Graphing the star variables in the diagram
         plt.plot(T, rho, color="#006769")
-        plt.scatter(max(T), max(rho), s=60, color="#006769", marker="o", label="Star center")
-        plt.scatter(min(T), min(rho), s=60, color="#006769", marker="d", label="Star surface")
+        plt.scatter(T.iloc[len(T)-1], rho.iloc[len(rho)-1], s=60, color="#006769", marker="o", label="Star center")
+        plt.scatter(T.iloc[0], rho.iloc[0], s=60, color="#006769", marker="d", label="Star surface")
 
         # Adding title and labels. Setting the ticks parameters
         plt.title("Temperature-Density Diagram", fontsize=20)               # Title
@@ -324,7 +313,8 @@ class Model:
             Equation (6)
             Both pressure and temperature are expressed in the modified unit system.
             """
-            return (self.mu/self.R)*((P*1e15)/(T*1e7))
+            R = 8.31447 * 10**7
+            return (self.mu/R)*((P*1e15)/(T*1e7))
         
         # Polytrope constant
         def K_pol(self, P, T):
@@ -333,26 +323,6 @@ class Model:
         def polytrope(self, K, T):
             return K*(T**2.5)
 
-        # Energy generation rate
-        def epsilon(self, P, T, row):
-            """
-            Equation (9) using DataFrames.
-            Given a row from the energy generation rate table, a value for pressure (P) and a value for
-            temperature (T) it returns the energy generation rate (epsilon) and the values for X1 and X2.
-            Temperature is expressed in the modified unit system.
-            """
-
-            # Selecting the appropriate row parameters of the energy generation rate table
-            cycle, _, _, log10epsilon1, nu = row.to_list()
-
-            # Depending on whether the cycle is 'PP' or 'CN', X1 and X2 change
-            if cycle == "PP":
-                    X1, X2 = self.X, self.X
-            elif cycle == "CN":
-                    X1, X2 = self.X, self.Z/3
-
-            return (10**log10epsilon1)*X1*X2*rho(self, P, T)*(T*10)**nu, X1, X2
-
         # Calculating the most efficient energy generation cycle for a given pressure and temperature
         def calculate_optimal_cycle(self, P, T):
             """
@@ -360,22 +330,51 @@ class Model:
             using the most efficient energy generation cycle.
             """
 
-            # If fusion temperature has not been reached yet
-            if T < self.epsilon_df.iloc[0,1]:
-                return (0.0, 0.0, 0.0, 0.0, "--")
-
-            # Otherwise, only the cycle that generates more energy should be considered
+            # Calculating PP cycle parameters
+            if T < 0.40:
+                epsilon1_PP, nu_PP = 0.0, 0.0
+            elif T < 0.60:
+                epsilon1_PP, nu_PP = 10**-6.84, 6.0
+            elif T < 0.95:
+                epsilon1_PP, nu_PP = 10**-6.04, 5.0
+            elif T < 1.20:
+                epsilon1_PP, nu_PP = 10**-5.56, 4.5
+            elif T < 1.65:
+                epsilon1_PP, nu_PP = 10**-5.02, 4.0
+            elif T < 2.40:
+                epsilon1_PP, nu_PP = 10**-4.40, 3.5
             else:
-                # Applying a temperature filter to the energy generation rate table
-                filter = (self.epsilon_df["Tmin"] <= T) & (T < self.epsilon_df["Tmax"])
-                epsilon_values = self.epsilon_df[filter].reset_index(drop=True)
-                # Calcultaing epsilon, X1 and X2 for each row
-                epsilon_values[["epsilon", "X1", "X2"]] = epsilon_values.apply(lambda row: epsilon(self, P, T, row), axis=1, result_type="expand")
-                # Selecting the row for which the energy generation rate is greater
-                index = epsilon_values["epsilon"].idxmax()
-                cycle, _, _, log10epsilon1, nu, _, X1, X2 = epsilon_values.loc[index].to_list()
-                # Returning epsilon1, X1, X2, nu and the cycle
-                return 10**log10epsilon1, X1, X2, nu, cycle
+                epsilon1_PP, nu_PP = 0.0, 0.0
+
+            # Calculating CN cycle parameters
+            if T < 1.20:
+                epsilon1_CN, nu_CN = 0.0, 0.0
+            elif T < 1.60:
+                epsilon1_CN, nu_CN = 10**-22.2, 20.0
+            elif T < 2.25:
+                epsilon1_CN, nu_CN = 10**-19.8, 18.0
+            elif T < 2.75:
+                epsilon1_CN, nu_CN = 10**-17.1, 16.0
+            elif T < 3.60:
+                epsilon1_CN, nu_CN = 10**-15.6, 15.0
+            elif T < 5.00:
+                epsilon1_CN, nu_CN = 10**-12.5, 13.0
+            else:
+                epsilon1_CN, nu_CN = 0.0, 0.0
+
+            # Selecting the cycle for which the energy generation rate is greater
+            epsilon_PP = epsilon1_PP * (self.X*self.X) * rho(self, P, T) * (T*10)**nu_PP
+            epsilon_CN = epsilon1_CN * (self.X*self.Z/3) * rho(self, P, T) * (T*10)**nu_CN
+            
+            # If there is no energy generation
+            if epsilon_PP == 0.0 and epsilon_CN == 0.0:
+                return 0.0, 0.0, 0.0, 0.0, "--"
+            # If the energy generation rate given by PP cycle is greater
+            if epsilon_PP > epsilon_CN:
+                return epsilon1_PP, self.X, self.X, nu_PP, "PP"
+            # If the energy generation rate given by CN cycle is greater
+            else:
+                return epsilon1_CN, self.X, self.Z/3, nu_CN, "CN"
 
 
         ################################################################################
@@ -517,25 +516,25 @@ class Model:
             radius for the next shell.
             """
 
-            return shell["r"] + h
+            return shell[2] + h
 
 
         # ---------------------------------- Step 2 ---------------------------------- #
 
-        def step2(self, shell, derivatives, h, i):
+        def step2(self, shell, derivatives, h):
             """
             Given the variables of the star for a shell and the derivatives of the current 
             and two previous shells it estimates the value of the pressure and temperature
             for the next shell.
             """
 
-            P = shell["P"]                                                      # P for the i shell
-            T = shell["T"]                                                      # T for the i shell
-            fP = derivatives["fP"][i]                                           # fP for the i shell
-            fT = derivatives["fT"][i]                                           # fT for the i shell
-            AP1 = h * (fP -  derivatives["fP"][i-1])                            # AP1 for the i shell
-            AP2 = h * (fP - 2*derivatives["fP"][i-1] + derivatives["fP"][i-2])  # AP2 for the i shell
-            AT1 = h * (fT -  derivatives["fT"][i-1])                            # AT1 for the i shell
+            P = shell[3]                                                    # P for the i shell
+            T = shell[4]                                                    # T for the i shell
+            fP = derivatives[2][0]                                          # fP for the i shell
+            fT = derivatives[2][1]                                          # fT for the i shell
+            AP1 = h * (fP -  derivatives[1][0])                             # AP1 for the i shell
+            AP2 = h * (fP - 2*derivatives[1][0] + derivatives[0][0])        # AP2 for the i shell
+            AT1 = h * (fT -  derivatives[1][1])                             # AT1 for the i shell
 
             P_est = P + h*fP + AP1/2 + 5*AP2/12    # Estimated pressure for the i+1 shell
             T_est = T + h*fT + AT1/2               # Estimated temperature for the i+1 shell
@@ -545,7 +544,7 @@ class Model:
 
         # ---------------------------------- Step 3 ---------------------------------- #
 
-        def step3(self, shell, derivatives, r, P, T, M, h, i):
+        def step3(self, shell, derivatives, r, P, T, M, h):
             """
             Given the variables of the star for a shell, an estimation of radius, pressure,
             and temperature for the next shell and the derivatives of the current and two 
@@ -554,7 +553,7 @@ class Model:
             """
 
             fM = dMdr_rad(self, r, P, T)             # fM for the i+1 shell
-            AM1 = h * (fM - derivatives["fM"][i])    # AM1 for the i+1 shell
+            AM1 = h * (fM - derivatives[2][3])       # AM1 for the i+1 shell
 
             M_cal = M + h*fM - AM1/2                 # Calculated mass for the i+1 shell
 
@@ -563,7 +562,7 @@ class Model:
 
         # ---------------------------------- Step 4 ---------------------------------- #
 
-        def step4(self, shell, derivatives, r, P, T, M, h, i):
+        def step4(self, shell, derivatives, r, P, T, M, h):
             """
             Given the variables of the star for a shell, an estimation of radius, pressure,
             temperature and mass for the next shell and the derivatives of the current and 
@@ -572,8 +571,8 @@ class Model:
             """
 
             fP = dPdr_rad(self, r, P, T, M)          # fP for the i+1 shell
-            AP1 = h * (fP - derivatives["fP"][i])    # AP1 for the i+1 shell
-            P = shell["P"]                           # P for the i shell
+            AP1 = h * (fP - derivatives[2][0])       # AP1 for the i+1 shell
+            P = shell[3]                             # P for the i shell
 
             P_cal = P + h*fP - AP1/2                 # Calculated pressure for the i+1 shell
 
@@ -595,7 +594,7 @@ class Model:
 
         # ---------------------------------- Step 6 ---------------------------------- #
 
-        def step6(self, shell, derivatives, r, P, T, L, h, i):
+        def step6(self, shell, derivatives, r, P, T, L, h):
             """
             Given the variables of the star for a shell, an estimation of radius, pressure 
             and temperature for the next shell and the derivatives of the current and two 
@@ -604,9 +603,9 @@ class Model:
             the energy.
             """
 
-            fL, cycle = dLdr_rad(self, r, P, T)                                 # fL for the i+1 shell
-            AL1 = h * (fL - derivatives["fL"][i])                               # AL1 for the i+1 shell
-            AL2 = h * (fL - 2*derivatives["fL"][i] + derivatives["fL"][i-1])    # AL2 for the i+1 shell
+            fL, cycle = dLdr_rad(self, r, P, T)                              # fL for the i+1 shell
+            AL1 = h * (fL - derivatives[2][2])                               # AL1 for the i+1 shell
+            AL2 = h * (fL - 2*derivatives[2][2] + derivatives[1][2])         # AL2 for the i+1 shell
             
             L_cal = L + h*fL - AL1/2  - AL2/12        # Calculated luminosity for the i+1 shell
 
@@ -615,7 +614,7 @@ class Model:
 
         # ---------------------------------- Step 7 ---------------------------------- #
 
-        def step7(self, shell, derivatives, r, P, T, L, h, i):
+        def step7(self, shell, derivatives, r, P, T, L, h):
             """
             Given the variables of the star for a shell, an estimation of radius, pressure,
             temperature and luminosity for the next shell and the derivatives of the current 
@@ -624,8 +623,8 @@ class Model:
             """
 
             fT = dTdr_rad(self, r, P, T, L)          # fT for the i+1 shell
-            AT1 = h * (fT - derivatives["fT"][i])    # AT1 for the i+1 shell
-            T = shell["T"]                           # T for the i shell
+            AT1 = h * (fT - derivatives[2][1])       # AT1 for the i+1 shell
+            T = shell[4]                             # T for the i shell
 
             T_cal = T + h*fT - AT1/2                 # Calculated temperature for the i+1 shell
 
@@ -634,7 +633,7 @@ class Model:
 
         # -------------------------------- Step 7 bis -------------------------------- #
 
-        def step7bis(self, shell, derivatives, r, M, h, i):
+        def step7bis(self, shell, derivatives, r, M, h):
             """
             Given the variables of the star for a shell, an estimation of radius and mass 
             for the next shell and the derivatives of the current and two previous shells it 
@@ -642,8 +641,8 @@ class Model:
             """
 
             fT = dTdr_conv(self, r, M)               # fT for the i+1 shell
-            AT1 = h * (fT - derivatives["fT"][i])    # AT1 for the i+1 shell
-            T = shell["T"]                           # T for the i shell
+            AT1 = h * (fT - derivatives[2][1])       # AT1 for the i+1 shell
+            T = shell[4]                             # T for the i shell
 
             T_cal = T + h*fT - AT1/2                 # Calculated temperature for the i+1 shell
 
@@ -712,15 +711,15 @@ class Model:
         ################################################################################
         ################################################################################
 
-        # Customizing the DataFrame options
-        pd.set_option("colheader_justify", "center", "display.max_rows", 1000)
-        pd.options.display.float_format = '{:.7f}'.format
+        # # Customizing the DataFrame options
+        # pd.set_option("colheader_justify", "center", "display.max_rows", None)
+        # pd.options.display.float_format = '{:.7f}'.format
 
-        # Defining the DataFrames that will store the data
-        outer = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "n+1"])
-        outer_derivatives = pd.DataFrame(data = [], columns=["fP", "fT", "fL", "fM"])
-        inside = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "n+1"])
-        inside_derivatives = pd.DataFrame(data = [], columns=["fP", "fT", "fL", "fM"])
+        # # Defining the DataFrames that will store the data
+        # outer = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "n+1"])
+        # outer_derivatives = pd.DataFrame(data = [], columns=["fP", "fT", "fL", "fM"])
+        # inside = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "n+1"])
+        # inside_derivatives = pd.DataFrame(data = [], columns=["fP", "fT", "fL", "fM"])
 
 
         ################################################################################
@@ -733,6 +732,9 @@ class Model:
         h = - Rini/shellBreaks          # Defining the radius step between shells (negative)
         r = Rini                        # Initializing the radius variable
 
+        outer_data = []                      # Initializing the list that will store the data (surface integration)
+        outer_derivatives = []          # Initializing the list that will store derivatives (surface integration)
+
         for i in range(3):
 
             # Calculating and storing the values for the first three shells
@@ -740,14 +742,14 @@ class Model:
             P = initial_surface_P(self, r, T)
             M = self.Mtot
             L = self.Ltot
-            outer.loc[i] = {"E":"--", "fase":"INICIO", "r":r, "P":P, "T":T, "L":L, "M":M, "rho":rho(self, P, T), "n+1":"-"}
+            outer_data.append(["--", "INICIO", r, P, T, L, M, rho(self, P, T), 0.0])
 
             # Calculating and storing the derivatives for the first three shells
             fT = dTdr_rad(self, r, P, T, L)
             fP = dPdr_rad(self, r, P, T, M)
             fM = 0.0
             fL = 0.0
-            outer_derivatives.loc[i] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
+            outer_derivatives.append([fP, fT, fL, fM])
 
             # Moving forward one step
             r += h
@@ -762,22 +764,22 @@ class Model:
         while True:             # First loop
 
             # Values for the current shell and derivatives of the current and two previous shells
-            shell = outer.loc[i]
-            derivatives = outer_derivatives.loc[i-2:i]
+            shell = outer_data[i]
+            derivatives = outer_derivatives[i-2:i+1]
 
             # Performing the first step
             r = step1(self, shell, h)
             # Performing the second step
-            P_est, T_est = step2(self, shell, derivatives, h, i)
+            P_est, T_est = step2(self, shell, derivatives, h)
 
             while True:         # Second loop
 
                 while True:     # Third loop
                     
                     # Performing the third step
-                    M_cal, fM = step3(self, shell, derivatives, r, P_est, T_est, shell["M"], h, i)
+                    M_cal, fM = step3(self, shell, derivatives, r, P_est, T_est, shell[6], h)
                     # Performing the fourth step
-                    P_cal, fP = step4(self, shell, derivatives, r, P_est, T_est, M_cal, h, i)
+                    P_cal, fP = step4(self, shell, derivatives, r, P_est, T_est, M_cal, h)
                     # Performing the fifth step
                     if stepX(self, P_cal, P_est):
                         break   # Third loop break
@@ -785,9 +787,9 @@ class Model:
                         P_est = P_cal
 
                 # Performing the sixth step
-                L_cal, fL, cycle = step6(self, shell, derivatives, r, P_cal, T_est, shell["L"], h, i)
+                L_cal, fL, cycle = step6(self, shell, derivatives, r, P_cal, T_est, shell[5], h)
                 # Performing the seventh step
-                T_cal, fT = step7(self, shell, derivatives, r, P_cal, T_est, L_cal, h, i)
+                T_cal, fT = step7(self, shell, derivatives, r, P_cal, T_est, L_cal, h)
                 # Performing the eighth step
                 if stepX(self, T_cal, T_est):
                     break       # Second loop break
@@ -802,14 +804,14 @@ class Model:
                 break           # First loop break
             else:
                 # Storing values and derivatives
-                outer.loc[i+1] = {"E":cycle, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "rho":rho(self, P_cal, T_cal), "n+1":n1}
-                outer_derivatives.loc[i+1] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
+                outer_data.append([cycle, fase, r, P_cal, T_cal, L_cal, M_cal, rho(self, P_cal, T_cal), n1])
+                outer_derivatives.append([fP, fT, fL, fM])
 
                 # Moving forward one step
                 i += 1
 
         # Storing how many shells are left to compute
-        convec_index = innerShells - len(outer)
+        convec_index = innerShells - len(outer_data)
 
 
         ################################################################################
@@ -826,6 +828,9 @@ class Model:
         r = 0.0                         # Initializing the radius variable
         K = K_pol(self, P_cal, T_cal)   # Calculating the polytrope coefficient        
         
+        inside_data = []                 # Initializing the list that will store the data (center integration)
+        inside_derivatives = []          # Initializing the list that will store derivatives (center integration)
+
         for i in range(3):
 
             # Calculating and storing the values for the first three shells
@@ -833,14 +838,14 @@ class Model:
             P = initial_center_P(self, r, T, K)
             M = initial_center_M(self, r, self.Tc, K)
             L, _ = initial_center_L(self, r, P, self.Tc, K)
-            inside.loc[i] = {"E":"--", "fase":"CENTRO", "r":r, "P":P, "T":T, "L":L, "M":M, "rho":rho(self, P ,T), "n+1":"-"}
+            inside_data.append(["--", "CENTER", r, P, T, L, M, rho(self, P, T), 0.0])
 
             # Calculating and storing the derivatives for the first three shells
             fT = dTdr_conv(self, r, M)
             fP = dPdr_conv(self, r, T, M, K)
             fM = dMdr_conv(self, r, T, K)
             fL, _ = dLdr_conv(self, r, P, T, K)
-            inside_derivatives.loc[i] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
+            inside_derivatives.append([fP, fT, fL, fM])
 
             # Moving forward one step
             r += h
@@ -853,28 +858,29 @@ class Model:
         fase = "CONVEC"         # Current fase
 
         # Iterating over the final layers
+        # for i in range(2, convec_index):
         for i in range(2, convec_index):
 
             # Values for the current shell and derivatives of the current and two previous shells
-            shell = inside.loc[i]
-            derivatives = inside_derivatives.loc[i-2:i]
+            shell = inside_data[i]
+            derivatives = inside_derivatives[i-2:i+1]
 
             # Performing the first step
             r = step1(self, shell, h)
             # Performing the second step bis
-            _, T_est = step2(self, shell, derivatives, h, i)
+            _, T_est = step2(self, shell, derivatives, h)
 
             while True:         # Loop 
                 
                 # Estimating pressure using the polytrope constant
                 P_est = polytrope(self, K, T_est)
                 # Performing the third step
-                M_cal, fM = step3(self, shell, derivatives, r, P_est, T_est, shell["M"], h, i)
+                M_cal, fM = step3(self, shell, derivatives, r, P_est, T_est, shell[6], h)
                 # Performing the seventh step bis
-                if shell["r"] + h < 1e-6:           # Very small values are considered zero
+                if shell[2] + h < 1e-4:           # Very small values of "r" are considered zero
                     T_cal = T_est
-                elif shell["r"] + h > 0.0:
-                    T_cal, fT = step7bis(self, shell, derivatives, r, M_cal, h, i)
+                elif shell[2] + h > 0.0:
+                    T_cal, fT = step7bis(self, shell, derivatives, r, M_cal, h)
                 # Performing the eighth step
                 if stepX(self, T_cal, T_est):
                     break       # Loop break
@@ -884,22 +890,15 @@ class Model:
             # Calculating pressure using the polytrope constant
             P_cal = polytrope(self, K, T_cal)
             # Performing the sixth step
-            L_cal, fL, cycle = step6(self, shell, derivatives, r, P_cal, T_cal, shell["L"], h, i)
+            L_cal, fL, cycle = step6(self, shell, derivatives, r, P_cal, T_cal, shell[5], h)
             # Calculating the derivative of the pressure for the i shell
             fP = dPdr_conv(self, r, T_cal, M_cal, K)
             # Storing values and derivatives
-            inside.loc[i+1] = {"E":cycle, "fase":fase, "r":r, "P":P_cal, "T":T_cal, "L":L_cal, "M":M_cal, "rho":rho(self, P_cal, T_cal), "n+1":"-"}
-            inside_derivatives.loc[i+1] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
+            inside_data.append([cycle, fase, r, P_cal, T_cal, L_cal, M_cal, rho(self, P_cal, T_cal), 0.0])
+            inside_derivatives.append([fP, fT, fL, fM])
 
             # Moving forward one step
             i += 1
-
-        # Storing data from both surface integration and center integration
-        rad = np.array(outer.loc[len(outer)-1, "P":"M"].to_list(), dtype=float)
-        conv = np.array(inside.loc[len(inside)-1, "P":"M"].to_list(), dtype=float)
-
-        # Redefining inside dataframe index so r=0.0 corresponds to i=shellBreaks
-        inside.index = range(shellBreaks, shellBreaks - convec_index - 1, -1)
 
 
         ################################################################################
@@ -907,7 +906,8 @@ class Model:
         ################################################################################
 
         r = Rini + h            # Initializing the radius variable
-        i = -1                      
+        i = -1
+        n = 0
 
         # Iterating until reaching the total radius
         while self.Rtot - r > 0.0:
@@ -917,18 +917,19 @@ class Model:
             P = np.real(initial_surface_P(self, r, T))    # Since r ~ Rtot, the program crashes if we do not take the real part
             M = self.Mtot
             L = self.Ltot
-            outer.loc[i] = {"E":"--", "fase":"^^^^^^", "r":r, "P":P, "T":T, "L":L, "M":M, "rho":rho(self, P, T), "n+1":"-"}
+            outer_data.insert(0, ["--", "^^^^^^", r, P, T, L, M, rho(self, P, T), 0.0])
 
             # Calculating and storing the derivatives for the first three shells
             fT = dTdr_rad(self, r, P, T, L)
             fP = dPdr_rad(self, r, P, T, M)
             fM = 0.0
             fL = 0.0
-            outer_derivatives.loc[i] = {"fP":fP, "fT":fT, "fL":fL, "fM":fM}
+            outer_derivatives.insert(0, [fP, fT, fL, fM])
 
             # Moving backward one step
             r += h
             i -= 1
+            n += 1
 
 
         ################################################################################
@@ -936,9 +937,15 @@ class Model:
         ################################################################################
 
         # Calculating total relative error using surface integration data and center integration data
-        self.totalRelativeError = calculate_total_relative_error(self, rad, conv)*100 
+        totalRelativeError = calculate_total_relative_error(self, np.array(outer_data[-1][2:7]), np.array(inside_data[-1][2:7]))*100 
 
-        # Joning outer and inside DataFrames using outer middle point
-        self.model = pd.concat([outer, inside.iloc[:-1]]).sort_index()
+        # Joning outer and inside data using outer middle point
+        model = outer_data + list(reversed(inside_data[:-1]))
         # Joning outer and inside DataFrames using inside middle point
-        # self.model = pd.concat([outer.sort_index().iloc[:-1], inside]).sort_index()
+        # model = outer_data[:-1] + list(reversed(inside_data))
+
+        # Returning a DataFrame object
+        model = pd.DataFrame(model, columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "n+1"])
+        model.index -= n
+        
+        return model, totalRelativeError
