@@ -1,4 +1,5 @@
-![StarPyLogo](StarPyLogo.png)
+
+<img src="StarPyLogo.png" alt="StarPyLogo" width="200" height="84">
 
 # Stellar-interior numerical model
 
