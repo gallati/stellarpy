@@ -1,3 +1,5 @@
+![StarPyLogo](StarPyLogo.png)
+
 # Stellar-interior numerical model
 
 #### Python module for solving the stellar-interior equations.

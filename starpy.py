@@ -53,7 +53,7 @@ class Star:
         self.mu = 1/(2*self.X + 3*self.Y/4 + self.Z/2)  # Mean molecular weight
 
         # Calculating the model variables
-        self.model, self.totalRelativeError = self._calculate()
+        self.model, self.totalRelativeError = self.__calculate__()
 
     # Defining the print instruction
     def __repr__(self):
@@ -299,7 +299,7 @@ class Star:
     def HRD(self):
         ...
 
-    def _calculate(self):
+    def __calculate__(self):
 
         ################################################################################
         ################################################################################
