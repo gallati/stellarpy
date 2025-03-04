@@ -1,5 +1,5 @@
 
-<img src="StarPyLogo.png" alt="StarPyLogo" width="200" height="84">
+<img src="StarPyLogo.png" alt="StarPyLogo" width="400" height="168" class="center">
 
 # Stellar-interior numerical model
 
