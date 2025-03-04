@@ -62,7 +62,7 @@ class Star:
         return self.model.to_string()
     
     # Defining the get method
-    def get(self, variable="all"):
+    def get(self, variable="all", solar_units=False):
         """
         Function to access variables.
         
@@ -72,11 +72,37 @@ class Star:
             If default ('all'), a Data Frame object is returned containing the calculated 
             values of the variables. For queries on specific variables you must enter one
             of the following strings: 'r', 'P', 'T', 'L', 'M' and 'rho'
+
+
+            * solar_units (bool, default = False)
+
+            If True, all data will be given using solar units.
+            If False, all data will be given using the model units.
         """
-        if variable == "all":
-            return self.model
+
+        # Solar units are used
+        if solar_units:
+            # Defining sun parameters
+            Msun = 1.9884    # 1e33 g
+            Rsun = 6.957     # 1e10 cm
+            Lsun = 3.842     # 1e33 erg s^-1
+            # Redefining model units
+            modelData = self.model
+            modelData["r"] = modelData["r"] / Rsun  # cm
+            modelData["P"] = modelData["P"] * 1e15  # dyn cm^-2
+            modelData["T"] = modelData["T"] * 1e7   # K
+            modelData["M"] = modelData["M"] / Msun  # g
+            modelData["L"] = modelData["L"] / Lsun  # erg s^-1
+        # Model units are used
         else:
-            return self.model[variable]
+            # Using model units
+            modelData = self.model
+
+        # Returning the variables
+        if variable == "all":
+            return modelData
+        else:
+            return modelData[variable]
     
     # Defining the error method
     def error(self):
@@ -170,45 +196,49 @@ class Star:
         if merge:
             plt.figure(figsize=figsize)
             for variable in which:
-                plt.plot(self.model[x_axis], self.model[variable]/self.model[variable].max(), label=plots.loc[variable]["title"], linewidth=1.5)
+                plt.plot(self.model[x_axis], self.model[variable]/self.model[variable].max(), label=plots.loc[variable]["title"], linewidth=2.5, alpha=0.8)
 
             # Customizing the plot
-            plt.title("Stellar-interior model", fontsize=20)                    # Title
-            plt.xlabel(plots.loc[x_axis]["label"], fontsize=16)                 # x axis label
-            plt.ylabel("Normalized magnitude", fontsize=16)                     # y axis label
+            plt.title("Stellar-interior model", fontsize=26, weight="bold")     # Title
+            plt.xlabel(plots.loc[x_axis]["label"], fontsize=20)                 # x axis label
+            plt.ylabel("Normalized magnitude", fontsize=20)                     # y axis label
+            plt.xlim((min(self.model[x_axis]), max(self.model[x_axis])))        # x limits
+            plt.ylim((-0.05, 1.05))                                             # y limits
             plt.tick_params(axis="both", labelsize=14)                          # Numbering size
             plt.gca().tick_params(direction="in", which="major", length=8)      # Major ticks size and orientation
             plt.gca().tick_params(direction="in", which="minor", length=3)      # Minor ticks size and orientation
             plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (x axis)
             plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (y axis)
             
-            # Marking the convective zone of the star
-            plt.axvspan(-1, transition, color="gray", alpha=0.2, label="Convective zone")
-            plt.legend(fontsize=12)                                                         # Leyend
-            plt.grid(which="major", linestyle="-", linewidth=1, visible=True)               # Major grid
-            plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True, alpha=0.5)  # Minor grid
+            plt.axvspan(-1, transition, color="gray", alpha=0.5, label="Convective zone")                               # Marking the convective zone of the star
+            plt.axvspan(transition, self.model[x_axis].iloc[0]*1.5, color="gray", alpha=0.1, label="Radiative zone")    # Marking the radiative zone of the star
+            plt.legend(fontsize=12)                                                                                     # Leyend
+            plt.grid(which="major", linestyle="-", color = "black", linewidth=0.5, alpha=0.4, visible=True)             # Major grid
+            # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True, alpha=0.5)                              # Minor grid
 
         # Curves in different figures (without normalization)
         else:
             for variable in which:
                 plt.figure(figsize=figsize)
-                plt.plot(self.model[x_axis], self.model[variable], color="k", linewidth=1.5)
+                plt.plot(self.model[x_axis], self.model[variable], color="red", linewidth=2.5, alpha=0.8)
 
                 # Customizing the plots for each figure
-                plt.title(plots.loc[variable]["title"], fontsize=20)                # Title
-                plt.xlabel(plots.loc[x_axis]["label"], fontsize=16)                 # x axis label
-                plt.ylabel(plots.loc[variable]["label"], fontsize=16)               # y axis label
+                plt.title(plots.loc[variable]["title"], fontsize=26, weight="bold") # Title
+                plt.xlabel(plots.loc[x_axis]["label"], fontsize=20)                 # x axis label
+                plt.ylabel(plots.loc[variable]["label"], fontsize=20)               # y axis label
+                plt.xlim((min(self.model[x_axis]), max(self.model[x_axis])))        # x limits
+                plt.ylim((min(self.model[variable])-0.05*max(self.model[variable]), max(self.model[variable])*1.05))  # y limits
                 plt.tick_params(axis="both", labelsize=14)                          # Numbering size
                 plt.gca().tick_params(direction="in", which="major", length=8)      # Major ticks size and orientation
                 plt.gca().tick_params(direction="in", which="minor", length=3)      # Minor ticks size and orientation
                 plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (x axis)
                 plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (y axis)
 
-                # Marking the convective zone of the star for each figure
-                plt.axvspan(-1, transition, color="gray", alpha=0.2, label="Convective zone")
-                plt.legend(fontsize=16)                                                         # Leyend
-                plt.grid(which="major", linestyle="-", linewidth=1, visible=True)               # Major grid
-                plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True, alpha=0.5)  # Minor grid
+                plt.axvspan(-1, transition, color="gray", alpha=0.5, label="Convective zone")                               # Marking the convective zone of the star
+                plt.axvspan(transition, self.model[x_axis].iloc[0]*1.5, color="gray", alpha=0.1, label="Radiative zone")    # Marking the radiative zone of the star
+                plt.legend(fontsize=16)                                                                                     # Leyend
+                plt.grid(which="major", linestyle="-", color = "black", linewidth=0.5, alpha=0.4, visible=True)             # Major grid
+                # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True)  # Minor grid
 
         plt.show()
 
@@ -276,12 +306,12 @@ class Star:
         plt.text(0.65, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=12, color="brown")
 
         # Graphing the star variables in the diagram
-        plt.plot(T, rho, color="#006769")
+        plt.plot(T, rho, color="#006769", linewidth=2.5)
         plt.scatter(T.iloc[len(T)-1], rho.iloc[len(rho)-1], s=60, color="#006769", marker="o", label="Star center")
         plt.scatter(T.iloc[0], rho.iloc[0], s=60, color="#006769", marker="d", label="Star surface")
 
         # Adding title and labels. Setting the ticks parameters
-        plt.title("Temperature-Density Diagram", fontsize=20)               # Title
+        plt.title("Temperature-Density Diagram", fontsize=22, weight="bold")# Title
         plt.xlabel("Log [T(K)]", fontsize=16)                               # x axis label
         plt.ylabel("Log [$\\rho$(g cm$^{-3})$]", fontsize=16)               # y axis label
         plt.tick_params(axis="both", labelsize=14)                          # Numbering size
@@ -291,7 +321,7 @@ class Star:
         plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))             # Setting minor ticks (y axis)
         plt.xlim(xlims)                                                     # x limits
         plt.ylim(ylims)                                                     # y limits
-        plt.legend(loc="upper right", fontsize=14)                          # Legend
+        plt.legend(loc="upper right", fontsize=16)                          # Legend
 
         plt.show()
 
