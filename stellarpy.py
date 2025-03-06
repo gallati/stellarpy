@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
+from scipy.optimize import minimize
 import pandas as pd
 import numpy as np
 
@@ -15,7 +16,7 @@ class Star:
         * Ltot (float, default = 70.0) : total luminosity of the star.
         * Tc (float, default = 2.0) : central temperature of the star.
         * X (float, default = 0.75) :  fraction of star mass in H.
-        * Y (float, default = 0.22 : fraction of mass in He.
+        * Y (float, default = 0.22) : fraction of mass in He.
 
     ## Methods
         * error() : function that returns the total relative error of the numerical 
@@ -103,6 +104,14 @@ class Star:
             return modelData
         else:
             return modelData[variable]
+
+    # Defining the parameters method
+    def parameters(self):
+        """
+        Returns star parameters as a list following the order:
+        [Mtot, Rtot, Ltot, Tc, X, Y]
+        """
+        return [self.Mtot, self.Rtot, self.Ltot, self.Tc, self.X, self.Y]
     
     # Defining the error method
     def error(self):
@@ -111,9 +120,40 @@ class Star:
         model.
         """
         return self.totalRelativeError
+    
+    # Defining the redefining method
+    def redefine(self, Mtot=None, Rtot=None, Ltot=None, Tc=None, X=None, Y=None):
+        """
+        Function to redefine star parameters. If a new value is not given for 
+        any of the parameters, it will not change.
+
+        ## Parameters
+            * Mtot (float) : total mass of the star.
+            * Rtot (float) : total radius of the star.
+            * Ltot (float) : total luminosity of the star.
+            * Tc (float) : central temperature of the star.
+            * X (float) :  fraction of star mass in H.
+            * Y (float) : fraction of mass in He.
+        """
+        # If no arguments are provided, object parameters are used
+        if Mtot is not None:
+            self.Mtot = Mtot
+        if Rtot is not None:
+            self.Rtot = Rtot
+        if Ltot is not None:
+            self.Ltot = Ltot
+        if Tc is not None:
+            self.Tc = Tc
+        if X is not None:
+            self.X = X
+        if Y is not None:
+            self.Y = Y
+        
+        # Calculating the model variables
+        self.model, self.totalRelativeError = self.__calculate__()
 
     # Defining the plot method for star variables
-    def visualize(self, x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False, solar_units=True, figsize=(10, 7)):
+    def visualize(self, x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False, solar_units=True, figsize=(8, 6)):
         """
         Function to graph the calculated variables.
 
@@ -201,7 +241,7 @@ class Star:
             # Customizing the plot
             plt.title("Stellar-interior model", fontsize=26, weight="bold")     # Title
             plt.xlabel(plots.loc[x_axis]["label"], fontsize=20)                 # x axis label
-            plt.ylabel("Normalized magnitude", fontsize=20)                     # y axis label
+            # plt.ylabel("Normalized magnitude", fontsize=20)                     # y axis label
             plt.xlim((min(self.model[x_axis]), max(self.model[x_axis])))        # x limits
             plt.ylim((-0.05, 1.05))                                             # y limits
             plt.tick_params(axis="both", labelsize=14)                          # Numbering size
@@ -214,7 +254,7 @@ class Star:
             plt.axvspan(transition, self.model[x_axis].iloc[0]*1.5, color="gray", alpha=0.1, label="Radiative zone")    # Marking the radiative zone of the star
             plt.legend(fontsize=12)                                                                                     # Leyend
             plt.grid(which="major", linestyle="-", color = "black", linewidth=0.5, alpha=0.4, visible=True)             # Major grid
-            # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True, alpha=0.5)                              # Minor grid
+            # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True, alpha=0.5)                            # Minor grid
 
         # Curves in different figures (without normalization)
         else:
@@ -223,7 +263,7 @@ class Star:
                 plt.plot(self.model[x_axis], self.model[variable], color="red", linewidth=2.5, alpha=0.8)
 
                 # Customizing the plots for each figure
-                plt.title(plots.loc[variable]["title"], fontsize=26, weight="bold") # Title
+                plt.title(plots.loc[variable]["title"], fontsize=18, weight="bold") # Title
                 plt.xlabel(plots.loc[x_axis]["label"], fontsize=20)                 # x axis label
                 plt.ylabel(plots.loc[variable]["label"], fontsize=20)               # y axis label
                 plt.xlim((min(self.model[x_axis]), max(self.model[x_axis])))        # x limits
@@ -238,12 +278,12 @@ class Star:
                 plt.axvspan(transition, self.model[x_axis].iloc[0]*1.5, color="gray", alpha=0.1, label="Radiative zone")    # Marking the radiative zone of the star
                 plt.legend(fontsize=16)                                                                                     # Leyend
                 plt.grid(which="major", linestyle="-", color = "black", linewidth=0.5, alpha=0.4, visible=True)             # Major grid
-                # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True)  # Minor grid
+                # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True)                                       # Minor grid
 
         plt.show()
 
     # Defining the Temperature-Density Diagram method
-    def TDD(self, figsize=(8,7)):
+    def TDD(self, figsize=(7,7)):
         """
         Function to plot the Temperature-Density Diagram, i.e. the values throughout the star for
         temperature and density. Several regions are distinguished depending on the dominant pressure.
@@ -302,7 +342,7 @@ class Star:
         # Adding text to the plot
         plt.text(0.10, 0.30, "Ideal gas", transform=plt.gca().transAxes, fontsize=12, color="brown")
         plt.text(0.15, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=12, color="brown")
-        plt.text(0.25, 0.90, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=12, color="brown")
+        plt.text(0.20, 0.90, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=12, color="brown")
         plt.text(0.65, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=12, color="brown")
 
         # Graphing the star variables in the diagram
@@ -321,13 +361,56 @@ class Star:
         plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))             # Setting minor ticks (y axis)
         plt.xlim(xlims)                                                     # x limits
         plt.ylim(ylims)                                                     # y limits
-        plt.legend(loc="upper right", fontsize=16)                          # Legend
+        plt.legend(loc="upper right", fontsize=14)                          # Legend
 
         plt.show()
 
     # Defining the Hertzsprung–Russell Diagram method
-    def HRD(self):
-        ...
+    def HR(self):
+        """
+        Function to represent the star in the Hertzsprung–Russell Diagram
+        """
+
+        # Loading data
+        stars_data = pd.read_csv("hertzsprung-russell-data.csv")
+
+        # Customizing the figure
+        plt.rcParams["font.family"] = "serif"           # Font
+        plt.figure(facecolor="black", figsize=(6, 7))   # Background color
+        plt.gca().set_facecolor("black")
+        for spine in plt.gca().spines.values():         # Axes color
+            spine.set_edgecolor("white")
+
+        # Plotting stars
+        plt.scatter(stars_data["log(Teff)"], stars_data["log(L/Lo)"], 
+                    s=stars_data["Plot Size"], c=stars_data["Color"], 
+                    edgecolors="black", linewidth=0.5)
+        
+        # Defining Stefan-Boltzmann constant and sun parameters
+        Lsun = 3.842        # 1e33 erg s^-1
+        sigma = 5.67040e-5  # erg cm^-2 s^-1 K^-4
+        # Defining log(L) and log(Teff)
+        star_L = np.log10( self.Ltot/Lsun )
+        star_Teff = np.log10( ((self.Ltot*1e33) / (4*np.pi*((self.Rtot*1e10)**2)*sigma ) )**0.25 )
+        # Plotting model star
+        plt.scatter(star_Teff, star_L, s=700, c="gold", alpha=0.2)
+        plt.scatter(star_Teff, star_L, marker="*", s=400, c="gold", label="Star", edgecolors="black", linewidth=0.5)
+
+        # Customizing the graph
+        plt.title("Hertzsprung-Russell Diagram", color="white", weight="bold", fontsize=18)         # Title
+        plt.xlabel("Temperature / K ", color="white", fontsize=12)                                  # x label
+        plt.ylabel("Log (L / L$_\\odot$)", color="white", fontsize=12)                              # y label
+        plt.gca().tick_params(which="major", length=8, direction="in", colors="white")              # Major ticks length and orientation
+        plt.tick_params(axis="x", which="minor", length=4, direction="in", color="white")           # Minor x ticks
+        plt.tick_params(axis="y", which="minor", length=4, direction="in", color="white")           # Minor y ticks
+        plt.xticks(np.log10(np.array([31000, 9850, 5000, 2500, 1000]), dtype=float),                # Major x ticks
+            labels=["30,000", "10,000", "5,000", "2,500", "1,000"], color="white")
+
+        # Showing the plot
+        plt.gca().invert_xaxis()
+        plt.minorticks_on()
+        plt.legend(fontsize=12)
+        plt.show()
 
     def __calculate__(self):
 
@@ -398,13 +481,13 @@ class Star:
             
             # If there is no energy generation
             if epsilon_PP == 0.0 and epsilon_CN == 0.0:
-                return 0.0, 0.0, 0.0, 0.0, "--"
+                return 0.0, 0.0, 0.0, 0.0, 0.0, "--"
             # If the energy generation rate given by PP cycle is greater
-            if epsilon_PP > epsilon_CN:
-                return epsilon1_PP, self.X, self.X, nu_PP, "PP"
+            if epsilon_PP >= epsilon_CN:
+                return epsilon_PP, epsilon1_PP, self.X, self.X, nu_PP, "PP"
             # If the energy generation rate given by CN cycle is greater
             else:
-                return epsilon1_CN, self.X, self.Z/3, nu_CN, "CN"
+                return epsilon_CN, epsilon1_CN, self.X, self.Z/3, nu_CN, "CN"
 
 
         ################################################################################
@@ -431,9 +514,9 @@ class Star:
             """
             Equation (20)
             """
-            epsilon1, X1, X2, nu, cycle = calculate_optimal_cycle(self, P, T)
+            epsilon, epsilon1, X1, X2, nu, cycle = calculate_optimal_cycle(self, P, T)
             Cl = 0.01845*epsilon1*X1*X2*(10**nu)*self.mu**2
-            return Cl * ((P*r)**2) * (T**(nu-2)), cycle
+            return Cl * ((P*r)**2) * (T**(nu-2)), epsilon, cycle
 
         def dTdr_rad(self, r, P, T, L):
             """
@@ -466,7 +549,7 @@ class Star:
             """
             Equation (24)
             """
-            epsilon1, X1, X2, nu, cycle = calculate_optimal_cycle(self, P, T)
+            _, epsilon1, X1, X2, nu, cycle = calculate_optimal_cycle(self, P, T)
             Cl = 0.01845*epsilon1*X1*X2*(10**nu)*self.mu**2
             return Cl * (K**2)*(T**(3+nu))*r**2, cycle
 
@@ -516,8 +599,8 @@ class Star:
             """
             Equation (44)
             """
-            epsilon1, X1, X2, nu, cycle = calculate_optimal_cycle(self, P, T)
-            return 0.006150*epsilon1*X1*X2*(10**nu)*(self.mu**2)*(K**2)*(self.Tc**(3+nu))*(r**3), cycle
+            epsilon, epsilon1, X1, X2, nu, cycle = calculate_optimal_cycle(self, P, T)
+            return 0.006150*epsilon1*X1*X2*(10**nu)*(self.mu**2)*(K**2)*(self.Tc**(3+nu))*(r**3), epsilon, cycle
 
         def initial_center_T(self, r, K):
             """
@@ -633,13 +716,13 @@ class Star:
             the energy.
             """
 
-            fL, cycle = dLdr_rad(self, r, P, T)                              # fL for the i+1 shell
+            fL, epsilon, cycle = dLdr_rad(self, r, P, T)                              # fL for the i+1 shell
             AL1 = h * (fL - derivatives[2][2])                               # AL1 for the i+1 shell
             AL2 = h * (fL - 2*derivatives[2][2] + derivatives[1][2])         # AL2 for the i+1 shell
             
             L_cal = L + h*fL - AL1/2  - AL2/12        # Calculated luminosity for the i+1 shell
 
-            return L_cal, fL, cycle
+            return L_cal, fL, epsilon, cycle
 
 
         # ---------------------------------- Step 7 ---------------------------------- #
@@ -741,17 +824,6 @@ class Star:
         ################################################################################
         ################################################################################
 
-        # # Customizing the DataFrame options
-        # pd.set_option("colheader_justify", "center", "display.max_rows", None)
-        # pd.options.display.float_format = '{:.7f}'.format
-
-        # # Defining the DataFrames that will store the data
-        # outer = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "n+1"])
-        # outer_derivatives = pd.DataFrame(data = [], columns=["fP", "fT", "fL", "fM"])
-        # inside = pd.DataFrame(data = [], columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "n+1"])
-        # inside_derivatives = pd.DataFrame(data = [], columns=["fP", "fT", "fL", "fM"])
-
-
         ################################################################################
         # ----------------------- First three shells (surface) ----------------------- #
         ################################################################################
@@ -762,7 +834,7 @@ class Star:
         h = - Rini/shellBreaks          # Defining the radius step between shells (negative)
         r = Rini                        # Initializing the radius variable
 
-        outer_data = []                      # Initializing the list that will store the data (surface integration)
+        outer_data = []                 # Initializing the list that will store the data (surface integration)
         outer_derivatives = []          # Initializing the list that will store derivatives (surface integration)
 
         for i in range(3):
@@ -772,7 +844,7 @@ class Star:
             P = initial_surface_P(self, r, T)
             M = self.Mtot
             L = self.Ltot
-            outer_data.append(["--", "INICIO", r, P, T, L, M, rho(self, P, T), 0.0])
+            outer_data.append(["--", "START", r, P, T, L, M, rho(self, P, T), 0.0, "kappa"])
 
             # Calculating and storing the derivatives for the first three shells
             fT = dTdr_rad(self, r, P, T, L)
@@ -817,7 +889,7 @@ class Star:
                         P_est = P_cal
 
                 # Performing the sixth step
-                L_cal, fL, cycle = step6(self, shell, derivatives, r, P_cal, T_est, shell[5], h)
+                L_cal, fL, epsilon, cycle = step6(self, shell, derivatives, r, P_cal, T_est, shell[5], h)
                 # Performing the seventh step
                 T_cal, fT = step7(self, shell, derivatives, r, P_cal, T_est, L_cal, h)
                 # Performing the eighth step
@@ -834,7 +906,7 @@ class Star:
                 break           # First loop break
             else:
                 # Storing values and derivatives
-                outer_data.append([cycle, fase, r, P_cal, T_cal, L_cal, M_cal, rho(self, P_cal, T_cal), n1])
+                outer_data.append([cycle, fase, r, P_cal, T_cal, L_cal, M_cal, rho(self, P_cal, T_cal), epsilon, "kappa"])
                 outer_derivatives.append([fP, fT, fL, fM])
 
                 # Moving forward one step
@@ -867,8 +939,8 @@ class Star:
             T = initial_center_T(self, r, K)
             P = initial_center_P(self, r, T, K)
             M = initial_center_M(self, r, self.Tc, K)
-            L, _ = initial_center_L(self, r, P, self.Tc, K)
-            inside_data.append(["--", "CENTER", r, P, T, L, M, rho(self, P, T), 0.0])
+            L, epsilon, _ = initial_center_L(self, r, P, self.Tc, K)
+            inside_data.append(["--", "CENTER", r, P, T, L, M, rho(self, P, T), epsilon, "kappa"])
 
             # Calculating and storing the derivatives for the first three shells
             fT = dTdr_conv(self, r, M)
@@ -920,11 +992,11 @@ class Star:
             # Calculating pressure using the polytrope constant
             P_cal = polytrope(self, K, T_cal)
             # Performing the sixth step
-            L_cal, fL, cycle = step6(self, shell, derivatives, r, P_cal, T_cal, shell[5], h)
+            L_cal, fL, epsilon, cycle = step6(self, shell, derivatives, r, P_cal, T_cal, shell[5], h)
             # Calculating the derivative of the pressure for the i shell
             fP = dPdr_conv(self, r, T_cal, M_cal, K)
             # Storing values and derivatives
-            inside_data.append([cycle, fase, r, P_cal, T_cal, L_cal, M_cal, rho(self, P_cal, T_cal), 0.0])
+            inside_data.append([cycle, fase, r, P_cal, T_cal, L_cal, M_cal, rho(self, P_cal, T_cal), epsilon, "kappa"])
             inside_derivatives.append([fP, fT, fL, fM])
 
             # Moving forward one step
@@ -947,7 +1019,7 @@ class Star:
             P = np.real(initial_surface_P(self, r, T))    # Since r ~ Rtot, the program crashes if we do not take the real part
             M = self.Mtot
             L = self.Ltot
-            outer_data.insert(0, ["--", "^^^^^^", r, P, T, L, M, rho(self, P, T), 0.0])
+            outer_data.insert(0, ["--", "^^^^^^", r, P, T, L, M, rho(self, P, T), 0.0, "kappa"])
 
             # Calculating and storing the derivatives for the first three shells
             fT = dTdr_rad(self, r, P, T, L)
@@ -974,8 +1046,19 @@ class Star:
         # Joning outer and inside DataFrames using inside middle point
         # model = outer_data[:-1] + list(reversed(inside_data))
 
+        # Computing oppacity variations
+        kappa = []
+        for i in range(len(model)):
+            kappa.append(model[i][7] / (model[i][4]**3.5))
+        kappa = np.array(kappa, dtype=float) / max(kappa)
+
         # Returning a DataFrame object
-        model = pd.DataFrame(model, columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "n+1"])
+        model = pd.DataFrame(model, columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "epsilon", "kappa"])
+        model["kappa"] = kappa
         model.index -= n
+
+        # Customizing the DataFrame options
+        pd.set_option("colheader_justify", "center", "display.max_rows", None)
+        pd.options.display.float_format = '{:.7f}'.format
         
         return model, totalRelativeError

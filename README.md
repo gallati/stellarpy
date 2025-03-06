@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="StellarPyLogo.png" alt="StarPyLogo" width="450" height="189">
+  <img src="images/StellarPyLogo.png" alt="StarPyLogo" width="450" height="189">
 </p>
 
 # Stellar-interior numerical model
@@ -133,7 +133,7 @@ For the visualization of variables throughout the star the `visualize()` method 
 model.visualize(x_axis = 'r', which = ["P", "T", "L", "M", "rho"], merge = True)
 ```
 
-![example](example.png) 
+![example](images/example.png) 
 
 
 License
