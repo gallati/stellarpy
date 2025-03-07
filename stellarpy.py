@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
-from scipy.optimize import minimize
+import matplotlib.patheffects as path_effects
 import pandas as pd
 import numpy as np
 
@@ -153,7 +153,7 @@ class Star:
         self.model, self.totalRelativeError = self.__calculate__()
 
     # Defining the plot method for star variables
-    def visualize(self, x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False, solar_units=True, figsize=(8, 6)):
+    def visualize(self, x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False, normalize=True, figsize=(8, 6)):
         """
         Function to graph the calculated variables.
 
@@ -177,10 +177,10 @@ class Star:
             different figures.
 
 
-            * solar_units (bool, default = True)
+            * normalize (bool, default = True)
 
-            If True, all plots will be graphed using solar units.
-            If False, all plots will be graphed using the model units.
+            If True, all plots will be graphed using normalized units.
+            If False, all plots will be graphed using a mix between cgs and solar units.
 
 
             * figsize (two-dimensional array-like, default = (10, 7))
@@ -191,8 +191,29 @@ class Star:
         # Changing font
         plt.rcParams["font.family"] = "serif"
 
+        # Normalized units are used
+        if normalize:
+            # Redefining model units
+            modelData = self.model
+            modelData["r"] = modelData["r"] / max(modelData["r"])
+            modelData["P"] = modelData["P"] / max(modelData["P"])
+            modelData["T"] = modelData["T"] / max(modelData["T"])
+            modelData["M"] = modelData["M"] / max(modelData["M"])
+            modelData["L"] = modelData["L"] / max(modelData["L"])
+            modelData["rho"] = modelData["rho"] / max(modelData["rho"])
+
+            # Defining titles and labels for each variable 
+            plots = pd.DataFrame(data=[("Radius", "r / R$_{\\!*}$"),
+                                    ("Pressure", "P / P$_\\text{c}$"), 
+                                    ("Temperature", "T / T$_\\text{c}$"),
+                                    ("Luminosity", "$\\ell$ / L$_{\\!*}$"),
+                                    ("Mass", "m / M$_{\\!*}$"),
+                                    ("Density","$\\rho$ / $\\rho_\\text{c}$")],
+                                columns=["title", "label"],
+                                index=["r", "P", "T", "L", "M", "rho"])
+
         # Solar units are used
-        if solar_units:
+        else:
             # Defining sun parameters
             Msun = 1.9884    # 1e33 g
             Rsun = 6.957     # 1e10 cm
@@ -214,20 +235,6 @@ class Star:
                                     ("Density", "$\\rho$ / g cm$^{-3}$")],
                                 columns=["title", "label"],
                                 index=["r", "P", "T", "L", "M", "rho"])
-        
-        # Model units are used
-        else:
-            # Using model units
-            modelData = self.model
-            # Defining titles and labels for each variable 
-            plots = pd.DataFrame(data=[("Radius", "r / $10^{10}$ cm"),
-                                    ("Pressure", "P / $10^{15}$ dyn cm$^{-2}$"), 
-                                    ("Temperature", "T / $10^{7}$ K"),
-                                    ("Luminosity", "L / $10^{33}$ erg s$^{-1}$"),
-                                    ("Mass", "M / $10^{33}$ g"),
-                                    ("Density","$\\rho$ / g cm$^{-3}$")],
-                                columns=["title", "label"],
-                                index=["r", "P", "T", "L", "M", "rho"])
 
         # Calculating the x value for which the transition to the convective zone occurs
         transition = self.model[self.model["fase"] == "CONVEC"].iloc[0][x_axis] 
@@ -239,9 +246,9 @@ class Star:
                 plt.plot(self.model[x_axis], self.model[variable]/self.model[variable].max(), label=plots.loc[variable]["title"], linewidth=2.5, alpha=0.8)
 
             # Customizing the plot
-            plt.title("Stellar-interior model", fontsize=26, weight="bold")     # Title
-            plt.xlabel(plots.loc[x_axis]["label"], fontsize=20)                 # x axis label
-            # plt.ylabel("Normalized magnitude", fontsize=20)                     # y axis label
+            plt.title("Stellar-interior model", fontsize=18, weight="bold")     # Title
+            plt.xlabel(plots.loc[x_axis]["label"], fontsize=14)                 # x axis label
+            # plt.ylabel("Normalized magnitude", fontsize=14)                   # y axis label
             plt.xlim((min(self.model[x_axis]), max(self.model[x_axis])))        # x limits
             plt.ylim((-0.05, 1.05))                                             # y limits
             plt.tick_params(axis="both", labelsize=14)                          # Numbering size
@@ -256,7 +263,7 @@ class Star:
             plt.grid(which="major", linestyle="-", color = "black", linewidth=0.5, alpha=0.4, visible=True)             # Major grid
             # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True, alpha=0.5)                            # Minor grid
 
-        # Curves in different figures (without normalization)
+        # Curves in different figures
         else:
             for variable in which:
                 plt.figure(figsize=figsize)
@@ -264,8 +271,8 @@ class Star:
 
                 # Customizing the plots for each figure
                 plt.title(plots.loc[variable]["title"], fontsize=18, weight="bold") # Title
-                plt.xlabel(plots.loc[x_axis]["label"], fontsize=20)                 # x axis label
-                plt.ylabel(plots.loc[variable]["label"], fontsize=20)               # y axis label
+                plt.xlabel(plots.loc[x_axis]["label"], fontsize=14)                 # x axis label
+                plt.ylabel(plots.loc[variable]["label"], fontsize=14)               # y axis label
                 plt.xlim((min(self.model[x_axis]), max(self.model[x_axis])))        # x limits
                 plt.ylim((min(self.model[variable])-0.05*max(self.model[variable]), max(self.model[variable])*1.05))  # y limits
                 plt.tick_params(axis="both", labelsize=14)                          # Numbering size
@@ -276,14 +283,14 @@ class Star:
 
                 plt.axvspan(-1, transition, color="gray", alpha=0.5, label="Convective zone")                               # Marking the convective zone of the star
                 plt.axvspan(transition, self.model[x_axis].iloc[0]*1.5, color="gray", alpha=0.1, label="Radiative zone")    # Marking the radiative zone of the star
-                plt.legend(fontsize=16)                                                                                     # Leyend
+                plt.legend(fontsize=14)                                                                                     # Leyend
                 plt.grid(which="major", linestyle="-", color = "black", linewidth=0.5, alpha=0.4, visible=True)             # Major grid
                 # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True)                                       # Minor grid
 
         plt.show()
 
     # Defining the Temperature-Density Diagram method
-    def TDD(self, figsize=(7,7)):
+    def TDD(self, figsize=(7,6)):
         """
         Function to plot the Temperature-Density Diagram, i.e. the values throughout the star for
         temperature and density. Several regions are distinguished depending on the dominant pressure.
@@ -341,19 +348,19 @@ class Star:
 
         # Adding text to the plot
         plt.text(0.10, 0.30, "Ideal gas", transform=plt.gca().transAxes, fontsize=12, color="brown")
-        plt.text(0.15, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=12, color="brown")
-        plt.text(0.20, 0.90, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=12, color="brown")
+        plt.text(0.15, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=12, color="brown").set_path_effects([path_effects.withStroke(linewidth=0.5, foreground="white")])
+        plt.text(0.20, 0.90, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=12, color="brown").set_path_effects([path_effects.withStroke(linewidth=1, foreground="gray")])
         plt.text(0.65, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=12, color="brown")
 
         # Graphing the star variables in the diagram
         plt.plot(T, rho, color="#006769", linewidth=2.5)
-        plt.scatter(T.iloc[len(T)-1], rho.iloc[len(rho)-1], s=60, color="#006769", marker="o", label="Star center")
-        plt.scatter(T.iloc[0], rho.iloc[0], s=60, color="#006769", marker="d", label="Star surface")
+        plt.scatter(T.iloc[len(T)-1], rho.iloc[len(rho)-1], s=100, color="#006769", marker="*", label="Star center")
+        plt.scatter(T.iloc[0], rho.iloc[0], s=80, color="#006769", marker="s", label="Star surface")
 
         # Adding title and labels. Setting the ticks parameters
-        plt.title("Temperature-Density Diagram", fontsize=22, weight="bold")# Title
-        plt.xlabel("Log [T(K)]", fontsize=16)                               # x axis label
-        plt.ylabel("Log [$\\rho$(g cm$^{-3})$]", fontsize=16)               # y axis label
+        plt.title("Temperature-Density Diagram", fontsize=18, weight="bold")# Title
+        plt.xlabel("Log [T(K)]", fontsize=14)                               # x axis label
+        plt.ylabel("Log [$\\rho$(g cm$^{-3})$]", labelpad=-7.5, fontsize=14)  # y axis label
         plt.tick_params(axis="both", labelsize=14)                          # Numbering size
         plt.gca().tick_params(direction="in", which="major", length=8)      # Major ticks size and orientation
         plt.gca().tick_params(direction="in", which="minor", length=3)      # Minor ticks size and orientation
@@ -361,7 +368,7 @@ class Star:
         plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))             # Setting minor ticks (y axis)
         plt.xlim(xlims)                                                     # x limits
         plt.ylim(ylims)                                                     # y limits
-        plt.legend(loc="upper right", fontsize=14)                          # Legend
+        plt.legend(frameon=True, edgecolor="black",loc="upper right", fontsize=14) # Legend
 
         plt.show()
 
@@ -398,8 +405,8 @@ class Star:
 
         # Customizing the graph
         plt.title("Hertzsprung-Russell Diagram", color="white", weight="bold", fontsize=18)         # Title
-        plt.xlabel("Temperature / K ", color="white", fontsize=12)                                  # x label
-        plt.ylabel("Log (L / L$_\\odot$)", color="white", fontsize=12)                              # y label
+        plt.xlabel("Temperature / K ", color="white", fontsize=14)                                  # x label
+        plt.ylabel("Log (L / L$_\\odot$)", color="white", fontsize=14)                              # y label
         plt.gca().tick_params(which="major", length=8, direction="in", colors="white")              # Major ticks length and orientation
         plt.tick_params(axis="x", which="minor", length=4, direction="in", color="white")           # Minor x ticks
         plt.tick_params(axis="y", which="minor", length=4, direction="in", color="white")           # Minor y ticks
