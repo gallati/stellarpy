@@ -92,7 +92,7 @@ class Star:
         ## Arguments:
             * variable (string, default = 'all'):
                 If default ('all'), a Data Frame object is returned containing the calculated values of the variables. 
-                For queries on specific variables you must enter one of the following strings: 'r', 'P', 'T', 'L', 'M' and 'rho'.
+                For queries on specific variables you must enter one of the following strings: 'r', 'P', 'T', 'L', 'M', 'rho', 'epsilon' or 'kappa'.
 
             * solar_units (bool, default = False):
                 If True, all data will be given using solar units.
@@ -175,11 +175,12 @@ class Star:
 
         ## Arguments:
             * x_axis (string, default = 'r'): 
-                String to select the independent variable of the plot from the following: 'r', 'P', 'T', 'L', 'M' and 'rho'.
+                String to select the independent variable of the plot from the following: 
+                'r', 'P', 'T', 'L', 'M', 'rho', 'epsilon' and 'kappa'.
 
             * which (array-like, default = ['P', 'T', 'L', 'M', 'rho']): 
                 Array-like containing the dependent variables desirable to plot in string format.
-                Supports the same values as x_axis: 'r', 'P', 'T', 'L', 'M' and 'rho'.
+                Supports the same values as x_axis: 'r', 'P', 'T', 'L', 'M', 'rho', 'epsilon' and 'kappa'.
 
             * merge (bool, default = False):
                 If True, all variables specified in 'which' are graphed in the same figure.
@@ -206,6 +207,8 @@ class Star:
             modelData["M"] = modelData["M"] / max(modelData["M"])
             modelData["L"] = modelData["L"] / max(modelData["L"])
             modelData["rho"] = modelData["rho"] / max(modelData["rho"])
+            modelData["kappa"] = modelData["kappa"] / max(modelData["kappa"])
+            modelData["epsilon"] = modelData["epsilon"] / max(modelData["epsilon"])
 
             # Defining titles and labels for each variable 
             plots = pd.DataFrame(data=[("Radius", "r / R$_{\\!*}$"),
@@ -213,9 +216,11 @@ class Star:
                                     ("Temperature", "T / T$_\\text{c}$"),
                                     ("Luminosity", "$\\ell$ / L$_{\\!*}$"),
                                     ("Mass", "m / M$_{\\!*}$"),
-                                    ("Density","$\\rho$ / $\\rho_\\text{c}$")],
+                                    ("Density", "$\\rho$ / $\\rho_\\text{c}$"),
+                                    ("Energy generation rate", "$\\varepsilon$ / $\\varepsilon_{\\text{max}}$"),
+                                    ("Opacity", "$\\kappa$ / $\\kappa_{\\text{max}}$")],
                                 columns=["title", "label"],
-                                index=["r", "P", "T", "L", "M", "rho"])
+                                index=["r", "P", "T", "L", "M", "rho", "epsilon", "kappa"])
 
         # Solar units are used
         else:
@@ -237,9 +242,11 @@ class Star:
                                     ("Temperature", "T / K"),
                                     ("Luminosity", "$\\ell$ / L$_{\\odot}$"),
                                     ("Mass", "m / M$_{\\odot}$"),
-                                    ("Density", "$\\rho$ / g cm$^{-3}$")],
+                                    ("Density", "$\\rho$ / g cm$^{-3}$"),
+                                    ("Energy generation rate", "$\\varepsilon$ / erg$\\,\\,$g$^{-1}\\,$s$^{-1}$"),
+                                    ("Kappa", "$\\kappa$ / $\\kappa_{\\text{max}}$")],
                                 columns=["title", "label"],
-                                index=["r", "P", "T", "L", "M", "rho"])
+                                index=["r", "P", "T", "L", "M", "rho", "epsilon", "kappa"])
 
         # Calculating the x value for which the transition to the convective zone occurs
         transition = self.model[self.model["fase"] == "CONVEC"].iloc[0][x_axis] 
@@ -382,7 +389,7 @@ class Star:
         """
 
         # Loading data
-        stars_data = pd.read_csv("hertzsprung-russell-data.csv")
+        stars_data = pd.read_csv("stellarpy/hertzsprung-russell-data.csv")
 
         # Customizing the figure
         plt.rcParams["font.family"] = "serif"           # Font
