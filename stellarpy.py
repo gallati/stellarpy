@@ -6,87 +6,105 @@ import numpy as np
 
 class Star:
     """
-    Stellar-interior numerical model. Object that once initializated estimates the
-    numerical value of radius, pressure, temperature, mass, luminosity and density
-    throughout a star with given initial parameters.
+    Stellar-interior numerical model. 
     
-    ## Parameters
-        * Mtot (float, default = 5.0) : total mass of the star.
-        * Rtot (float, default = 11.5) : total radius of the star.
-        * Ltot (float, default = 70.0) : total luminosity of the star.
-        * Tc (float, default = 2.0) : central temperature of the star.
-        * X (float, default = 0.75) :  fraction of star mass in H.
-        * Y (float, default = 0.22) : fraction of mass in He.
+    Represents a star with a given mass, radius, luminosity, central temperature and chemical composition.
 
-    ## Methods
-        * error() : function that returns the total relative error of the numerical 
-        calculation.
-        * visualize(x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False, solar_units=True, figsize=(10, 7)) : 
-        function that enables the graphical representation of the calculated variables.
+    ## Atributes:
+        * Mtot (float, default = 5.0): Total mass of the star.
+        * Rtot (float, default = 11.5): Total radius of the star.
+        * Ltot (float, default = 70.0): Total luminosity of the star.
+        * Tc (float, default = 2.0): Central temperature of the star.
+        * X (float, default = 0.75): Fraction of star mass in H.
+        * Y (float, default = 0.22): Fraction of mass in He.
 
-    ## Units
-    In order to properly estimate the variables of the star, the unit system adopted 
-    for parameter input and results interpretation varies with respect to CGS.
+    ## Methods:
+        * error(): Returns the total relative error of the numerical calculation.
+        * visualize(): Graphical representation of the calculated variables throughout the star.
+        * TDD(): Graphical representation of the star in the Temperature-Density Diagram.
+        * HR(): Graphical representation of the star in the Hertzsprung–Russell Diagram.
 
-    * radius (r)                         ->   1e10 cm
-    * pressure (P)                       ->   1e15 dyn cm^-2
-    * temperature (T)                    ->   1e7 K
-    * mass (M)                           ->   1e33 g
-    * luminosity (L)                     ->   1e33 erg s^-1
-    * density (rho)                      ->   1 g cm^-3
-    * energy generation rate (epsilon)   ->   1 erg g^-1 s^-1
-    * opacity (kappa)                    ->   1 cm^2 g^-1
+    ## Units:
+        In order to properly estimate the variables of the star, the unit system adopted for internal calculations 
+        of the model varies with respect to CGS. However, both input and output values of the model can be converted
+        to solar units.
+
+        * radius (r)                         ->   1e10 cm
+        * pressure (P)                       ->   1e15 dyn cm^-2
+        * temperature (T)                    ->   1e7 K
+        * mass (M)                           ->   1e33 g
+        * luminosity (L)                     ->   1e33 erg s^-1
+        * density (rho)                      ->   1 g cm^-3
+        * energy generation rate (epsilon)   ->   1 erg g^-1 s^-1
+        * opacity (kappa)                    ->   1 cm^2 g^-1
     """
 
     # Model initializer
-    def __init__(self, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0, X=0.75, Y=0.22):
+    def __init__(self, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0, X=0.75, Y=0.22, solar_units=False):
+        """
+        Initializes a new instance of Star.
 
-        # Variable parameters
-        self.Mtot = Mtot                                # Total mass of the star
-        self.Rtot = Rtot                                # Total radius of the star
-        self.Ltot = Ltot                                # Total luminosity of the star
-        self.Tc = Tc                                    # Central temperature of the star
-
-        # Constant parameters
-        self.X = X                                      # Fraction of star mass in H
-        self.Y = Y                                      # Fraction of star mass in He
-        self.Z = 1 - self.X - self.Y                    # Metalicity
-        self.mu = 1/(2*self.X + 3*self.Y/4 + self.Z/2)  # Mean molecular weight
+        ## Arguments:
+            * Mtot (float, default = 5.0): Total mass of the star.
+            * Rtot (float, default = 11.5): Total radius of the star.
+            * Ltot (float, default = 70.0): Total luminosity of the star.
+            * Tc (float, default = 2.0): Central temperature of the star.
+            * X (float, default = 0.75): Fraction of star mass in H.
+            * Y (float, default = 0.22): Fraction of mass in He.
+            * solar_units (bool, default = False): Specifies whether solar units are to be used as input.
+        """
+        
+        # Mass, radius and luminosity using solar units
+        if solar_units:
+            Msun = 1.9884                                   # 1e33 g
+            Rsun = 6.957                                    # 1e10 cm
+            Lsun = 3.842                                    # 1e33 erg s^-1
+            self.Mtot = Mtot*Msun                           # Total mass of the star
+            self.Rtot = Rtot*Rsun                           # Total radius of the star
+            self.Ltot = Ltot*Lsun                           # Total luminosity of the star
+        # Mass, radius and luminosity using model units
+        else:
+            self.Mtot = Mtot                                # Total mass of the star
+            self.Rtot = Rtot                                # Total radius of the star
+            self.Ltot = Ltot                                # Total luminosity of the star
+        
+        # Defining other parameters
+        self.Tc = Tc                                        # Central temperature of the star
+        self.X = X                                          # Fraction of star mass in H
+        self.Y = Y                                          # Fraction of star mass in He
+        self.Z = 1 - self.X - self.Y                        # Metalicity
+        self.mu = 1/(2*self.X + 3*self.Y/4 + self.Z/2)      # Mean molecular weight
 
         # Calculating the model variables
-        self.model, self.totalRelativeError = self.__calculate__()
+        self.model, self.totalRelativeError = self.__calculate()
 
     # Defining the print instruction
     def __repr__(self):
         return self.model.__repr__()
     def __str__(self):
         return self.model.to_string()
-    
+
     # Defining the get method
     def get(self, variable="all", solar_units=False):
         """
-        Function to access variables.
+        Returns the requested Star instance data.
         
-        ## Parameters
-            * variable (string, default = 'all'): 
+        ## Arguments:
+            * variable (string, default = 'all'):
+                If default ('all'), a Data Frame object is returned containing the calculated values of the variables. 
+                For queries on specific variables you must enter one of the following strings: 'r', 'P', 'T', 'L', 'M' and 'rho'.
 
-            If default ('all'), a Data Frame object is returned containing the calculated 
-            values of the variables. For queries on specific variables you must enter one
-            of the following strings: 'r', 'P', 'T', 'L', 'M' and 'rho'
-
-
-            * solar_units (bool, default = False)
-
-            If True, all data will be given using solar units.
-            If False, all data will be given using the model units.
+            * solar_units (bool, default = False):
+                If True, all data will be given using solar units.
+                If False, all data will be given using the model units.
         """
 
         # Solar units are used
         if solar_units:
             # Defining sun parameters
-            Msun = 1.9884    # 1e33 g
-            Rsun = 6.957     # 1e10 cm
-            Lsun = 3.842     # 1e33 erg s^-1
+            Msun = 1.9884                           # 1e33 g
+            Rsun = 6.957                            # 1e10 cm
+            Lsun = 3.842                            # 1e33 erg s^-1
             # Redefining model units
             modelData = self.model
             modelData["r"] = modelData["r"] / Rsun  # cm
@@ -102,40 +120,38 @@ class Star:
         # Returning the variables
         if variable == "all":
             return modelData
+        # Returning requested variable
         else:
             return modelData[variable]
 
     # Defining the parameters method
     def parameters(self):
         """
-        Returns star parameters as a list following the order:
-        [Mtot, Rtot, Ltot, Tc, X, Y]
+        Returns Star instance atributes as a list following the order: [Mtot, Rtot, Ltot, Tc, X, Y]
         """
         return [self.Mtot, self.Rtot, self.Ltot, self.Tc, self.X, self.Y]
     
     # Defining the error method
     def error(self):
         """
-        Returns total relative error of the numerical calculation of the star-interior 
-        model.
+        Returns total relative error of the numerical calculation of the star-interior model.
         """
         return self.totalRelativeError
     
     # Defining the redefining method
     def redefine(self, Mtot=None, Rtot=None, Ltot=None, Tc=None, X=None, Y=None):
         """
-        Function to redefine star parameters. If a new value is not given for 
-        any of the parameters, it will not change.
+        Redefines Star instance atributes.
 
-        ## Parameters
-            * Mtot (float) : total mass of the star.
-            * Rtot (float) : total radius of the star.
-            * Ltot (float) : total luminosity of the star.
-            * Tc (float) : central temperature of the star.
-            * X (float) :  fraction of star mass in H.
-            * Y (float) : fraction of mass in He.
+        ## Arguments:
+            * Mtot (float, default = 5.0): Total mass of the star.
+            * Rtot (float, default = 11.5): Total radius of the star.
+            * Ltot (float, default = 70.0): Total luminosity of the star.
+            * Tc (float, default = 2.0): Central temperature of the star.
+            * X (float, default = 0.75): Fraction of star mass in H.
+            * Y (float, default = 0.22): Fraction of mass in He.
         """
-        # If no arguments are provided, object parameters are used
+        # If no arguments are provided, instance atributes are used
         if Mtot is not None:
             self.Mtot = Mtot
         if Rtot is not None:
@@ -150,42 +166,31 @@ class Star:
             self.Y = Y
         
         # Calculating the model variables
-        self.model, self.totalRelativeError = self.__calculate__()
+        self.model, self.totalRelativeError = self.__calculate()
 
     # Defining the plot method for star variables
     def visualize(self, x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False, normalize=True, figsize=(8, 6)):
         """
-        Function to graph the calculated variables.
+        Graphical representation of the calculated variables throughout the star.
 
-        ## Parameters
+        ## Arguments:
             * x_axis (string, default = 'r'): 
-
-            String to select the independent variable of the plot. It can only be one of
-            the variables calculated with the model: 'r', 'P', 'T', 'L', 'M' and 'rho'.
-
+                String to select the independent variable of the plot from the following: 'r', 'P', 'T', 'L', 'M' and 'rho'.
 
             * which (array-like, default = ['P', 'T', 'L', 'M', 'rho']): 
-
-            Array-like containing the dependent variables desirable to plot in string format.
-            Supports the same values as x_axis: 'r', 'P', 'T', 'L', 'M' and 'rho'.
-
+                Array-like containing the dependent variables desirable to plot in string format.
+                Supports the same values as x_axis: 'r', 'P', 'T', 'L', 'M' and 'rho'.
 
             * merge (bool, default = False):
+                If True, all variables specified in 'which' are graphed in the same figure.
+                If False, all variables specified in 'which' are graphed in different figures.
 
-            If True, it plots all variables specified in 'which' normalized in the same figure.
-            If False, it plots all variables specified in 'which' without normalizing in
-            different figures.
+            * normalize (bool, default = True):
+                If True, all plots will be graphed using normalized units.
+                If False, all plots will be graphed using a mix between cgs and solar units.
 
-
-            * normalize (bool, default = True)
-
-            If True, all plots will be graphed using normalized units.
-            If False, all plots will be graphed using a mix between cgs and solar units.
-
-
-            * figsize (two-dimensional array-like, default = (10, 7))
-
-            Two-dimensional array-like for a better customization on the figures size.
+            * figsize (two-dimensional array-like, default = (8, 6)):
+                Two-dimensional array-like for a better customization on the figures size.
         """
 
         # Changing font
@@ -230,8 +235,8 @@ class Star:
             plots = pd.DataFrame(data=[("Radius", "r / R$_{\\odot}$"),
                                     ("Pressure", "P / dyn cm$^{-2}$"), 
                                     ("Temperature", "T / K"),
-                                    ("Luminosity", "L / L$_{\\odot}$"),
-                                    ("Mass", "M / M$_{\\odot}$"),
+                                    ("Luminosity", "$\\ell$ / L$_{\\odot}$"),
+                                    ("Mass", "m / M$_{\\odot}$"),
                                     ("Density", "$\\rho$ / g cm$^{-3}$")],
                                 columns=["title", "label"],
                                 index=["r", "P", "T", "L", "M", "rho"])
@@ -292,15 +297,13 @@ class Star:
     # Defining the Temperature-Density Diagram method
     def TDD(self, figsize=(7,6)):
         """
-        Function to plot the Temperature-Density Diagram, i.e. the values throughout the star for
-        temperature and density. Several regions are distinguished depending on the dominant pressure.
-
+        Graphical representation of the star variables in the Temperature-Density Diagram. 
+        Several regions are distinguished depending on the dominant pressure.
         I: ideal gas. II: degeneracy. III: relativistic degeneracy. IV: radiation pressure.
 
-        ## Parameters
-            * figsize (two-dimensional array-like, default = (10, 7))
-
-            Two-dimensional array-like for a better customization on the figures size.
+        ## Arguments:
+            * figsize (two-dimensional array-like, default = (7, 6)):
+                Two-dimensional array-like for a better customization on the figures size.
         """
 
         # Defining fundamental constants and star constants
@@ -353,9 +356,9 @@ class Star:
         plt.text(0.65, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=12, color="brown")
 
         # Graphing the star variables in the diagram
-        plt.plot(T, rho, color="#006769", linewidth=2.5)
-        plt.scatter(T.iloc[len(T)-1], rho.iloc[len(rho)-1], s=100, color="#006769", marker="*", label="Star center")
-        plt.scatter(T.iloc[0], rho.iloc[0], s=80, color="#006769", marker="s", label="Star surface")
+        plt.plot(T, rho, color="#006769", linewidth=2.5, zorder=1)
+        plt.scatter(T.iloc[len(T)-1], rho.iloc[len(rho)-1], s=100, color="#006769", marker="*", edgecolors="black", linewidths=0.6, label="Star center", zorder=2)
+        plt.scatter(T.iloc[0], rho.iloc[0], s=80, color="#006769", marker="s", edgecolors="black", linewidths=0.6, label="Star surface", zorder=2)
 
         # Adding title and labels. Setting the ticks parameters
         plt.title("Temperature-Density Diagram", fontsize=18, weight="bold")# Title
@@ -375,7 +378,7 @@ class Star:
     # Defining the Hertzsprung–Russell Diagram method
     def HR(self):
         """
-        Function to represent the star in the Hertzsprung–Russell Diagram
+        Graphical representation of the star in the Hertzsprung–Russell Diagram.
         """
 
         # Loading data
@@ -405,8 +408,8 @@ class Star:
 
         # Customizing the graph
         plt.title("Hertzsprung-Russell Diagram", color="white", weight="bold", fontsize=18)         # Title
-        plt.xlabel("Temperature / K ", color="white", fontsize=14)                                  # x label
-        plt.ylabel("Log (L / L$_\\odot$)", color="white", fontsize=14)                              # y label
+        plt.xlabel("T / K ", color="white", fontsize=14)                                  # x label
+        plt.ylabel("Log (L / L$_{\\!\\odot}$)", color="white", fontsize=14)                              # y label
         plt.gca().tick_params(which="major", length=8, direction="in", colors="white")              # Major ticks length and orientation
         plt.tick_params(axis="x", which="minor", length=4, direction="in", color="white")           # Minor x ticks
         plt.tick_params(axis="y", which="minor", length=4, direction="in", color="white")           # Minor y ticks
@@ -419,7 +422,12 @@ class Star:
         plt.legend(fontsize=12)
         plt.show()
 
-    def __calculate__(self):
+    # Defining the function to calculate 
+    def __calculate(self):
+        """
+        Performs the calculation of the stellar-interior numerical model. 
+        Returns both the calculated variables and the total relative error of the calculation.
+        """
 
         ################################################################################
         ################################################################################
@@ -446,8 +454,7 @@ class Star:
         # Calculating the most efficient energy generation cycle for a given pressure and temperature
         def calculate_optimal_cycle(self, P, T):
             """
-            For a given pressure and temperature it retruns the values of epsilon1, X1, X2 and nu
-            using the most efficient energy generation cycle.
+            For a given pressure and temperature it retruns the values of epsilon, epsilon1, X1, X2 and nu using the most efficient energy generation cycle.
             """
 
             # Calculating PP cycle parameters
