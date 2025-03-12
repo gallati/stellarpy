@@ -1,3 +1,9 @@
+# Nuno Cerviño Luridiana / ncervino@ucm.es
+# 
+# Relation between variables and shell[i] index:
+# i        :   0      1   2   3   4   5   6    7      8       9
+# variable : cycle  fase  r   P   T   L   M   rho  epsilon  kappa
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 import matplotlib.patheffects as path_effects
@@ -244,7 +250,7 @@ class Star:
                                     ("Mass", "m / M$_{\\odot}$"),
                                     ("Density", "$\\rho$ / g cm$^{-3}$"),
                                     ("Energy generation rate", "$\\varepsilon$ / erg$\\,\\,$g$^{-1}\\,$s$^{-1}$"),
-                                    ("Kappa", "$\\kappa$ / $\\kappa_{\\text{max}}$")],
+                                    ("Kappa", "$\\kappa$ / cm$^2$ g$^{-1}$")],
                                 columns=["title", "label"],
                                 index=["r", "P", "T", "L", "M", "rho", "epsilon", "kappa"])
 
@@ -357,15 +363,16 @@ class Star:
         plt.fill_between(logT_1_3, logrho_I_III, ylims[1], color="#5c5c5c")         # Relativistic degeneracy
 
         # Adding text to the plot
-        plt.text(0.10, 0.30, "Ideal gas", transform=plt.gca().transAxes, fontsize=12, color="brown")
-        plt.text(0.15, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=12, color="brown").set_path_effects([path_effects.withStroke(linewidth=0.5, foreground="white")])
-        plt.text(0.20, 0.90, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=12, color="brown").set_path_effects([path_effects.withStroke(linewidth=1, foreground="gray")])
-        plt.text(0.65, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=12, color="brown")
+        plt.text(0.10, 0.30, "Ideal gas", transform=plt.gca().transAxes, fontsize=12, color="white").set_path_effects([path_effects.withStroke(linewidth=1.7, foreground="black")])
+        plt.text(0.15, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=12, color="white").set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="black")])
+        plt.text(0.20, 0.90, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=12, color="white").set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="black")])
+        plt.text(0.65, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=12, color="white").set_path_effects([path_effects.withStroke(linewidth=1.8, foreground="black")])
 
         # Graphing the star variables in the diagram
-        plt.plot(T, rho, color="#006769", linewidth=2.5, zorder=1)
-        plt.scatter(T.iloc[len(T)-1], rho.iloc[len(rho)-1], s=100, color="#006769", marker="*", edgecolors="black", linewidths=0.6, label="Star center", zorder=2)
-        plt.scatter(T.iloc[0], rho.iloc[0], s=80, color="#006769", marker="s", edgecolors="black", linewidths=0.6, label="Star surface", zorder=2)
+        plt.plot(T, rho, color="black", linewidth=3.5, zorder=1)
+        plt.plot(T, rho, color="orange", linewidth=2.5, zorder=1)
+        plt.scatter(T.iloc[len(T)-1], rho.iloc[len(rho)-1], s=200, color="orange", marker="*", edgecolors="black", linewidths=0.6, label="Star center", zorder=2)
+        plt.scatter(T.iloc[0], rho.iloc[0], s=100, color="orange", marker="s", edgecolors="black", linewidths=0.6, label="Star surface", zorder=2)
 
         # Adding title and labels. Setting the ticks parameters
         plt.title("Temperature-Density Diagram", fontsize=18, weight="bold")# Title
@@ -443,10 +450,10 @@ class Star:
         ################################################################################
 
         # Density
-        def rho(self, P, T):
+        def perfect_gas_rho(self, P, T):
             """
             Equation (6)
-            Both pressure and temperature are expressed in the modified unit system.
+            Both pressure and temperature are expected in the modified unit system.
             """
             R = 8.31447 * 10**7
             return (self.mu/R)*((P*1e15)/(T*1e7))
@@ -457,6 +464,15 @@ class Star:
         
         def polytrope(self, K, T):
             return K*(T**2.5)
+        
+        # Opacity
+        def opacity(self, rho, T):
+            """
+            Equation (8)
+            Both density and temperature are expected in the modified unit system.
+            """
+            g_bf = 3.162
+            return 4.34e25 * g_bf * self.Z * (1+self.X) * rho / ((T*1e7)**3.5)
 
         # Calculating the most efficient energy generation cycle for a given pressure and temperature
         def calculate_optimal_cycle(self, P, T):
@@ -497,8 +513,8 @@ class Star:
                 epsilon1_CN, nu_CN = 0.0, 0.0
 
             # Selecting the cycle for which the energy generation rate is greater
-            epsilon_PP = epsilon1_PP * (self.X*self.X) * rho(self, P, T) * (T*10)**nu_PP
-            epsilon_CN = epsilon1_CN * (self.X*self.Z/3) * rho(self, P, T) * (T*10)**nu_CN
+            epsilon_PP = epsilon1_PP * (self.X*self.X) * perfect_gas_rho(self, P, T) * (T*10)**nu_PP
+            epsilon_CN = epsilon1_CN * (self.X*self.Z/3) * perfect_gas_rho(self, P, T) * (T*10)**nu_CN
             
             # If there is no energy generation
             if epsilon_PP == 0.0 and epsilon_CN == 0.0:
@@ -865,7 +881,9 @@ class Star:
             P = initial_surface_P(self, r, T)
             M = self.Mtot
             L = self.Ltot
-            outer_data.append(["--", "START", r, P, T, L, M, rho(self, P, T), 0.0, "kappa"])
+            rho = perfect_gas_rho(self, P, T)
+            kappa = opacity(self, rho, T)
+            outer_data.append(["--", "START", r, P, T, L, M, rho, 0.0, kappa])
 
             # Calculating and storing the derivatives for the first three shells
             fT = dTdr_rad(self, r, P, T, L)
@@ -926,8 +944,11 @@ class Star:
             if step10(self, n1):
                 break           # First loop break
             else:
+                # Computing density and opacity
+                rho = perfect_gas_rho(self, P_cal, T_cal)
+                kappa = opacity(self, rho, T_cal)
                 # Storing values and derivatives
-                outer_data.append([cycle, fase, r, P_cal, T_cal, L_cal, M_cal, rho(self, P_cal, T_cal), epsilon, "kappa"])
+                outer_data.append([cycle, fase, r, P_cal, T_cal, L_cal, M_cal, rho, epsilon, kappa])
                 outer_derivatives.append([fP, fT, fL, fM])
 
                 # Moving forward one step
@@ -961,7 +982,9 @@ class Star:
             P = initial_center_P(self, r, T, K)
             M = initial_center_M(self, r, self.Tc, K)
             L, epsilon, _ = initial_center_L(self, r, P, self.Tc, K)
-            inside_data.append(["--", "CENTER", r, P, T, L, M, rho(self, P, T), epsilon, "kappa"])
+            rho = perfect_gas_rho(self, P, T)
+            kappa = opacity(self, rho, T)
+            inside_data.append(["--", "CENTER", r, P, T, L, M, rho, epsilon, kappa])
 
             # Calculating and storing the derivatives for the first three shells
             fT = dTdr_conv(self, r, M)
@@ -1016,8 +1039,11 @@ class Star:
             L_cal, fL, epsilon, cycle = step6(self, shell, derivatives, r, P_cal, T_cal, shell[5], h)
             # Calculating the derivative of the pressure for the i shell
             fP = dPdr_conv(self, r, T_cal, M_cal, K)
+            # Computing density and opacity
+            rho = perfect_gas_rho(self, P_cal, T_cal)
+            kappa = opacity(self, rho, T_cal)
             # Storing values and derivatives
-            inside_data.append([cycle, fase, r, P_cal, T_cal, L_cal, M_cal, rho(self, P_cal, T_cal), epsilon, "kappa"])
+            inside_data.append([cycle, fase, r, P_cal, T_cal, L_cal, M_cal, rho, epsilon, kappa])
             inside_derivatives.append([fP, fT, fL, fM])
 
             # Moving forward one step
@@ -1040,7 +1066,9 @@ class Star:
             P = np.real(initial_surface_P(self, r, T))    # Since r ~ Rtot, the program crashes if we do not take the real part
             M = self.Mtot
             L = self.Ltot
-            outer_data.insert(0, ["--", "^^^^^^", r, P, T, L, M, rho(self, P, T), 0.0, "kappa"])
+            rho = perfect_gas_rho(self, P, T)
+            kappa = opacity(self, rho, T)
+            outer_data.insert(0, ["--", "^^^^^^", r, P, T, L, M, rho, 0.0, kappa])
 
             # Calculating and storing the derivatives for the first three shells
             fT = dTdr_rad(self, r, P, T, L)
@@ -1067,15 +1095,8 @@ class Star:
         # Joning outer and inside DataFrames using inside middle point
         # model = outer_data[:-1] + list(reversed(inside_data))
 
-        # Computing oppacity variations
-        kappa = []
-        for i in range(len(model)):
-            kappa.append(model[i][7] / (model[i][4]**3.5))
-        kappa = np.array(kappa, dtype=float) / max(kappa)
-
         # Returning a DataFrame object
         model = pd.DataFrame(model, columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "epsilon", "kappa"])
-        model["kappa"] = kappa
         model.index -= n
 
         # Customizing the DataFrame options
