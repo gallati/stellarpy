@@ -1,8 +1,15 @@
-# Nuno Cerviño Luridiana / ncervino@ucm.es
+# Universidad Complutense de Madrid
+# Facultad de Ciencias Físicas 
+# Course 2024 / 2025
+#
+# Nuno Cerviño Luridiana
+# ncervino@ucm.es 
+#
 # 
+#
 # Relation between variables and shell[i] index:
 # i        :   0      1   2   3   4   5   6    7      8       9
-# variable : cycle  fase  r   P   T   L   M   rho  epsilon  kappa
+# variable : cycle  fase  r   P   T   l   m   rho  epsilon  kappa
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
@@ -25,6 +32,9 @@ class Star:
         * Y (float, default = 0.22): Fraction of mass in He.
 
     ## Methods:
+        * get(): Returns the requested Star instance data.
+        * parameters(): Returns Star instance atributes as a list following the order: [Mtot, Rtot, Ltot, Tc, X, Y]
+        * redefine(): Redefines Star instance atributes.
         * error(): Returns the total relative error of the numerical calculation.
         * visualize(): Graphical representation of the calculated variables throughout the star.
         * TDD(): Graphical representation of the star in the Temperature-Density Diagram.
@@ -38,8 +48,8 @@ class Star:
         * radius (r)                         ->   1e10 cm
         * pressure (P)                       ->   1e15 dyn cm^-2
         * temperature (T)                    ->   1e7 K
-        * mass (M)                           ->   1e33 g
-        * luminosity (L)                     ->   1e33 erg s^-1
+        * mass (m)                           ->   1e33 g
+        * luminosity (l)                     ->   1e33 erg s^-1
         * density (rho)                      ->   1 g cm^-3
         * energy generation rate (epsilon)   ->   1 erg g^-1 s^-1
         * opacity (kappa)                    ->   1 cm^2 g^-1
@@ -98,7 +108,7 @@ class Star:
         ## Arguments:
             * variable (string, default = 'all'):
                 If default ('all'), a Data Frame object is returned containing the calculated values of the variables. 
-                For queries on specific variables you must enter one of the following strings: 'r', 'P', 'T', 'L', 'M', 'rho', 'epsilon' or 'kappa'.
+                For queries on specific variables you must enter one of the following strings: 'r', 'P', 'T', 'l', 'm', 'rho', 'epsilon' or 'kappa'.
 
             * solar_units (bool, default = False):
                 If True, all data will be given using solar units.
@@ -116,8 +126,8 @@ class Star:
             modelData["r"] = modelData["r"] / Rsun  # cm
             modelData["P"] = modelData["P"] * 1e15  # dyn cm^-2
             modelData["T"] = modelData["T"] * 1e7   # K
-            modelData["M"] = modelData["M"] / Msun  # g
-            modelData["L"] = modelData["L"] / Lsun  # erg s^-1
+            modelData["m"] = modelData["m"] / Msun  # g
+            modelData["l"] = modelData["l"] / Lsun  # erg s^-1
         # Model units are used
         else:
             # Using model units
@@ -136,13 +146,6 @@ class Star:
         Returns Star instance atributes as a list following the order: [Mtot, Rtot, Ltot, Tc, X, Y]
         """
         return [self.Mtot, self.Rtot, self.Ltot, self.Tc, self.X, self.Y]
-    
-    # Defining the error method
-    def error(self):
-        """
-        Returns total relative error of the numerical calculation of the star-interior model.
-        """
-        return self.totalRelativeError
     
     # Defining the redefining method
     def redefine(self, Mtot=None, Rtot=None, Ltot=None, Tc=None, X=None, Y=None):
@@ -174,19 +177,26 @@ class Star:
         # Calculating the model variables
         self.model, self.totalRelativeError = self.__calculate()
 
+    # Defining the error method
+    def error(self):
+        """
+        Returns total relative error of the numerical calculation of the star-interior model.
+        """
+        return self.totalRelativeError
+
     # Defining the plot method for star variables
-    def visualize(self, x_axis="r", which=["P", "T", "L", "M", "rho"], merge=False, normalize=True, figsize=(8, 6)):
+    def visualize(self, x_axis="r", which=["P", "T", "l", "m", "rho"], merge=False, normalize=True, figsize=(8, 6)):
         """
         Graphical representation of the calculated variables throughout the star.
 
         ## Arguments:
             * x_axis (string, default = 'r'): 
                 String to select the independent variable of the plot from the following: 
-                'r', 'P', 'T', 'L', 'M', 'rho', 'epsilon' and 'kappa'.
+                'r', 'P', 'T', 'l', 'm', 'rho', 'epsilon' and 'kappa'.
 
-            * which (array-like, default = ['P', 'T', 'L', 'M', 'rho']): 
+            * which (array-like, default = ['P', 'T', 'l', 'm', 'rho']): 
                 Array-like containing the dependent variables desirable to plot in string format.
-                Supports the same values as x_axis: 'r', 'P', 'T', 'L', 'M', 'rho', 'epsilon' and 'kappa'.
+                Supports the same values as x_axis: 'r', 'P', 'T', 'l', 'm', 'rho', 'epsilon' and 'kappa'.
 
             * merge (bool, default = False):
                 If True, all variables specified in 'which' are graphed in the same figure.
@@ -210,8 +220,8 @@ class Star:
             modelData["r"] = modelData["r"] / max(modelData["r"])
             modelData["P"] = modelData["P"] / max(modelData["P"])
             modelData["T"] = modelData["T"] / max(modelData["T"])
-            modelData["M"] = modelData["M"] / max(modelData["M"])
-            modelData["L"] = modelData["L"] / max(modelData["L"])
+            modelData["m"] = modelData["m"] / max(modelData["m"])
+            modelData["l"] = modelData["l"] / max(modelData["l"])
             modelData["rho"] = modelData["rho"] / max(modelData["rho"])
             modelData["kappa"] = modelData["kappa"] / max(modelData["kappa"])
             modelData["epsilon"] = modelData["epsilon"] / max(modelData["epsilon"])
@@ -226,7 +236,7 @@ class Star:
                                     ("Energy generation rate", "$\\varepsilon$ / $\\varepsilon_{\\text{max}}$"),
                                     ("Opacity", "$\\kappa$ / $\\kappa_{\\text{max}}$")],
                                 columns=["title", "label"],
-                                index=["r", "P", "T", "L", "M", "rho", "epsilon", "kappa"])
+                                index=["r", "P", "T", "l", "m", "rho", "epsilon", "kappa"])
 
         # Solar units are used
         else:
@@ -239,8 +249,8 @@ class Star:
             modelData["r"] = modelData["r"] / Rsun  # cm
             modelData["P"] = modelData["P"] * 1e15  # dyn cm^-2
             modelData["T"] = modelData["T"] * 1e7   # K
-            modelData["M"] = modelData["M"] / Msun  # g
-            modelData["L"] = modelData["L"] / Lsun  # erg s^-1
+            modelData["m"] = modelData["m"] / Msun  # g
+            modelData["l"] = modelData["l"] / Lsun  # erg s^-1
 
             # Defining titles and labels for each variable 
             plots = pd.DataFrame(data=[("Radius", "r / R$_{\\odot}$"),
@@ -250,9 +260,9 @@ class Star:
                                     ("Mass", "m / M$_{\\odot}$"),
                                     ("Density", "$\\rho$ / g cm$^{-3}$"),
                                     ("Energy generation rate", "$\\varepsilon$ / erg$\\,\\,$g$^{-1}\\,$s$^{-1}$"),
-                                    ("Kappa", "$\\kappa$ / cm$^2$ g$^{-1}$")],
+                                    ("Opacity", "$\\kappa$ / cm$^2$ g$^{-1}$")],
                                 columns=["title", "label"],
-                                index=["r", "P", "T", "L", "M", "rho", "epsilon", "kappa"])
+                                index=["r", "P", "T", "l", "m", "rho", "epsilon", "kappa"])
 
         # Calculating the x value for which the transition to the convective zone occurs
         transition = self.model[self.model["fase"] == "CONVEC"].iloc[0][x_axis] 
@@ -264,12 +274,12 @@ class Star:
                 plt.plot(self.model[x_axis], self.model[variable]/self.model[variable].max(), label=plots.loc[variable]["title"], linewidth=2.5, alpha=0.8)
 
             # Customizing the plot
-            plt.title("Stellar-interior model", fontsize=18, weight="bold")     # Title
-            plt.xlabel(plots.loc[x_axis]["label"], fontsize=14)                 # x axis label
+            plt.title("Stellar-interior model", fontsize=20, weight="bold")     # Title
+            plt.xlabel(plots.loc[x_axis]["label"], fontsize=18)                 # x axis label
             # plt.ylabel("Normalized magnitude", fontsize=14)                   # y axis label
             plt.xlim((min(self.model[x_axis]), max(self.model[x_axis])))        # x limits
             plt.ylim((-0.05, 1.05))                                             # y limits
-            plt.tick_params(axis="both", labelsize=14)                          # Numbering size
+            plt.tick_params(axis="both", labelsize=16)                          # Numbering size
             plt.gca().tick_params(direction="in", which="major", length=8)      # Major ticks size and orientation
             plt.gca().tick_params(direction="in", which="minor", length=3)      # Minor ticks size and orientation
             plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (x axis)
@@ -277,7 +287,7 @@ class Star:
             
             plt.axvspan(-1, transition, color="gray", alpha=0.5, label="Convective zone")                               # Marking the convective zone of the star
             plt.axvspan(transition, self.model[x_axis].iloc[0]*1.5, color="gray", alpha=0.1, label="Radiative zone")    # Marking the radiative zone of the star
-            plt.legend(fontsize=12)                                                                                     # Leyend
+            plt.legend(fontsize=16)                                                                                     # Leyend
             plt.grid(which="major", linestyle="-", color = "black", linewidth=0.5, alpha=0.4, visible=True)             # Major grid
             # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True, alpha=0.5)                            # Minor grid
 
@@ -288,12 +298,12 @@ class Star:
                 plt.plot(self.model[x_axis], self.model[variable], color="red", linewidth=2.5, alpha=0.8)
 
                 # Customizing the plots for each figure
-                plt.title(plots.loc[variable]["title"], fontsize=18, weight="bold") # Title
-                plt.xlabel(plots.loc[x_axis]["label"], fontsize=14)                 # x axis label
-                plt.ylabel(plots.loc[variable]["label"], fontsize=14)               # y axis label
+                plt.title(plots.loc[variable]["title"], fontsize=20, weight="bold") # Title
+                plt.xlabel(plots.loc[x_axis]["label"], fontsize=18)                 # x axis label
+                plt.ylabel(plots.loc[variable]["label"], fontsize=18)               # y axis label
                 plt.xlim((min(self.model[x_axis]), max(self.model[x_axis])))        # x limits
                 plt.ylim((min(self.model[variable])-0.05*max(self.model[variable]), max(self.model[variable])*1.05))  # y limits
-                plt.tick_params(axis="both", labelsize=14)                          # Numbering size
+                plt.tick_params(axis="both", labelsize=16)                          # Numbering size
                 plt.gca().tick_params(direction="in", which="major", length=8)      # Major ticks size and orientation
                 plt.gca().tick_params(direction="in", which="minor", length=3)      # Minor ticks size and orientation
                 plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (x axis)
@@ -301,21 +311,21 @@ class Star:
 
                 plt.axvspan(-1, transition, color="gray", alpha=0.5, label="Convective zone")                               # Marking the convective zone of the star
                 plt.axvspan(transition, self.model[x_axis].iloc[0]*1.5, color="gray", alpha=0.1, label="Radiative zone")    # Marking the radiative zone of the star
-                plt.legend(fontsize=14)                                                                                     # Leyend
+                plt.legend(fontsize=16)                                                                                     # Leyend
                 plt.grid(which="major", linestyle="-", color = "black", linewidth=0.5, alpha=0.4, visible=True)             # Major grid
                 # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True)                                       # Minor grid
 
         plt.show()
 
     # Defining the Temperature-Density Diagram method
-    def TDD(self, figsize=(7,6)):
+    def TDD(self, figsize=(8,6)):
         """
         Graphical representation of the star variables in the Temperature-Density Diagram. 
         Several regions are distinguished depending on the dominant pressure.
         I: ideal gas. II: degeneracy. III: relativistic degeneracy. IV: radiation pressure.
 
         ## Arguments:
-            * figsize (two-dimensional array-like, default = (7, 6)):
+            * figsize (two-dimensional array-like, default = (8, 6)):
                 Two-dimensional array-like for a better customization on the figures size.
         """
 
@@ -363,10 +373,10 @@ class Star:
         plt.fill_between(logT_1_3, logrho_I_III, ylims[1], color="#5c5c5c")         # Relativistic degeneracy
 
         # Adding text to the plot
-        plt.text(0.10, 0.30, "Ideal gas", transform=plt.gca().transAxes, fontsize=12, color="white").set_path_effects([path_effects.withStroke(linewidth=1.7, foreground="black")])
-        plt.text(0.15, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=12, color="white").set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="black")])
-        plt.text(0.20, 0.90, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=12, color="white").set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="black")])
-        plt.text(0.65, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=12, color="white").set_path_effects([path_effects.withStroke(linewidth=1.8, foreground="black")])
+        plt.text(0.10, 0.30, "Ideal gas", transform=plt.gca().transAxes, fontsize=14, color="white").set_path_effects([path_effects.withStroke(linewidth=1.7, foreground="black")])
+        plt.text(0.15, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=14, color="white").set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="black")])
+        plt.text(0.20, 0.90, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=14, color="white").set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="black")])
+        plt.text(0.65, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=14, color="white").set_path_effects([path_effects.withStroke(linewidth=1.8, foreground="black")])
 
         # Graphing the star variables in the diagram
         plt.plot(T, rho, color="black", linewidth=3.5, zorder=1)
@@ -375,17 +385,17 @@ class Star:
         plt.scatter(T.iloc[0], rho.iloc[0], s=100, color="orange", marker="s", edgecolors="black", linewidths=0.6, label="Star surface", zorder=2)
 
         # Adding title and labels. Setting the ticks parameters
-        plt.title("Temperature-Density Diagram", fontsize=18, weight="bold")# Title
-        plt.xlabel("Log [T(K)]", fontsize=14)                               # x axis label
-        plt.ylabel("Log [$\\rho$(g cm$^{-3})$]", labelpad=-7.5, fontsize=14)  # y axis label
-        plt.tick_params(axis="both", labelsize=14)                          # Numbering size
+        plt.title("Temperature-Density Diagram", fontsize=20, weight="bold")# Title
+        plt.xlabel("Log [T(K)]", fontsize=18)                               # x axis label
+        plt.ylabel("Log [$\\rho$(g cm$^{-3})$]", labelpad=-7.5, fontsize=18)  # y axis label
+        plt.tick_params(axis="both", labelsize=16)                          # Numbering size
         plt.gca().tick_params(direction="in", which="major", length=8)      # Major ticks size and orientation
         plt.gca().tick_params(direction="in", which="minor", length=3)      # Minor ticks size and orientation
         plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))             # Setting minor ticks (x axis)
         plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))             # Setting minor ticks (y axis)
         plt.xlim(xlims)                                                     # x limits
         plt.ylim(ylims)                                                     # y limits
-        plt.legend(frameon=True, edgecolor="black",loc="upper right", fontsize=14) # Legend
+        plt.legend(frameon=True, edgecolor="black",loc="upper right", fontsize=16) # Legend
 
         plt.show()
 
@@ -422,9 +432,9 @@ class Star:
 
         # Customizing the graph
         plt.title("Hertzsprung-Russell Diagram", color="white", weight="bold", fontsize=18)         # Title
-        plt.xlabel("T / K ", color="white", fontsize=14)                                  # x label
-        plt.ylabel("Log (L / L$_{\\!\\odot}$)", color="white", fontsize=14)                              # y label
-        plt.gca().tick_params(which="major", length=8, direction="in", colors="white")              # Major ticks length and orientation
+        plt.xlabel("T / K ", color="white", fontsize=16)                                  # x label
+        plt.ylabel("Log (L / L$_{\\!\\odot}$)", color="white", fontsize=16)                              # y label
+        plt.gca().tick_params(which="major", length=9, direction="in", colors="white", labelsize=13)              # Major ticks length and orientation
         plt.tick_params(axis="x", which="minor", length=4, direction="in", color="white")           # Minor x ticks
         plt.tick_params(axis="y", which="minor", length=4, direction="in", color="white")           # Minor y ticks
         plt.xticks(np.log10(np.array([31000, 9850, 5000, 2500, 1000]), dtype=float),                # Major x ticks
@@ -433,7 +443,7 @@ class Star:
         # Showing the plot
         plt.gca().invert_xaxis()
         plt.minorticks_on()
-        plt.legend(fontsize=12)
+        plt.legend(fontsize=16)
         plt.show()
 
     # Defining the function to calculate 
@@ -540,12 +550,12 @@ class Star:
             Cm = 0.01523*self.mu
             return Cm * (P*r**2) / T
 
-        def dPdr_rad(self, r, P, T, M):
+        def dPdr_rad(self, r, P, T, m):
             """
             Equation (19)
             """
             Cp = 8.084*self.mu
-            return - Cp * P * M / (T * (r**2))
+            return - Cp * P * m / (T * (r**2))
 
         def dLdr_rad(self, r, P, T):
             """
@@ -555,12 +565,12 @@ class Star:
             Cl = 0.01845*epsilon1*X1*X2*(10**nu)*self.mu**2
             return Cl * ((P*r)**2) * (T**(nu-2)), epsilon, cycle
 
-        def dTdr_rad(self, r, P, T, L):
+        def dTdr_rad(self, r, P, T, l):
             """
             Equation (21)
             """
             Ct = 0.01679*self.Z*(1+self.X)*self.mu*self.mu
-            return -Ct * (L*(P**2)) / ((T**8.5)*(r**2))
+            return -Ct * (l*(P**2)) / ((T**8.5)*(r**2))
 
 
         # ------------------------------ Convective case ----------------------------- #
@@ -572,7 +582,7 @@ class Star:
             Cm = 0.01523*self.mu
             return Cm * K*(T**1.5)*r**2
 
-        def dPdr_conv(self, r, T, M, K):
+        def dPdr_conv(self, r, T, m, K):
             """
             Equation (23)
             """
@@ -580,7 +590,7 @@ class Star:
                 return 0.0
             else:
                 Cp = 8.084*self.mu
-                return -Cp * K*(T**1.5)*M / (r**2)
+                return -Cp * K*(T**1.5)*m / (r**2)
 
         def dLdr_conv(self, r, P, T, K):
             """
@@ -590,7 +600,7 @@ class Star:
             Cl = 0.01845*epsilon1*X1*X2*(10**nu)*self.mu**2
             return Cl * (K**2)*(T**(3+nu))*r**2, cycle
 
-        def dTdr_conv(self, r, M):
+        def dTdr_conv(self, r, m):
             """
             Equation (25)
             """
@@ -598,7 +608,7 @@ class Star:
                 return 0.0
             else:
                 Ct = 3.234*self.mu
-                return -Ct * M / (r**2)
+                return -Ct * m / (r**2)
 
 
         ################################################################################
@@ -694,7 +704,7 @@ class Star:
 
         # ---------------------------------- Step 3 ---------------------------------- #
 
-        def step3(self, shell, derivatives, r, P, T, M, h):
+        def step3(self, shell, derivatives, r, P, T, m, h):
             """
             Given the variables of the star for a shell, an estimation of radius, pressure,
             and temperature for the next shell and the derivatives of the current and two 
@@ -702,17 +712,17 @@ class Star:
             next shell.
             """
 
-            fM = dMdr_rad(self, r, P, T)             # fM for the i+1 shell
-            AM1 = h * (fM - derivatives[2][3])       # AM1 for the i+1 shell
+            fm = dMdr_rad(self, r, P, T)             # fm for the i+1 shell
+            AM1 = h * (fm - derivatives[2][3])       # AM1 for the i+1 shell
 
-            M_cal = M + h*fM - AM1/2                 # Calculated mass for the i+1 shell
+            m_cal = m + h*fm - AM1/2                 # Calculated mass for the i+1 shell
 
-            return M_cal, fM
+            return m_cal, fm
 
 
         # ---------------------------------- Step 4 ---------------------------------- #
 
-        def step4(self, shell, derivatives, r, P, T, M, h):
+        def step4(self, shell, derivatives, r, P, T, m, h):
             """
             Given the variables of the star for a shell, an estimation of radius, pressure,
             temperature and mass for the next shell and the derivatives of the current and 
@@ -720,7 +730,7 @@ class Star:
             for the next shell.
             """
 
-            fP = dPdr_rad(self, r, P, T, M)          # fP for the i+1 shell
+            fP = dPdr_rad(self, r, P, T, m)          # fP for the i+1 shell
             AP1 = h * (fP - derivatives[2][0])       # AP1 for the i+1 shell
             P = shell[3]                             # P for the i shell
 
@@ -744,7 +754,7 @@ class Star:
 
         # ---------------------------------- Step 6 ---------------------------------- #
 
-        def step6(self, shell, derivatives, r, P, T, L, h):
+        def step6(self, shell, derivatives, r, P, T, l, h):
             """
             Given the variables of the star for a shell, an estimation of radius, pressure 
             and temperature for the next shell and the derivatives of the current and two 
@@ -753,18 +763,18 @@ class Star:
             the energy.
             """
 
-            fL, epsilon, cycle = dLdr_rad(self, r, P, T)                              # fL for the i+1 shell
-            AL1 = h * (fL - derivatives[2][2])                               # AL1 for the i+1 shell
-            AL2 = h * (fL - 2*derivatives[2][2] + derivatives[1][2])         # AL2 for the i+1 shell
+            fl, epsilon, cycle = dLdr_rad(self, r, P, T)                              # fl for the i+1 shell
+            AL1 = h * (fl - derivatives[2][2])                               # AL1 for the i+1 shell
+            AL2 = h * (fl - 2*derivatives[2][2] + derivatives[1][2])         # AL2 for the i+1 shell
             
-            L_cal = L + h*fL - AL1/2  - AL2/12        # Calculated luminosity for the i+1 shell
+            l_cal = l + h*fl - AL1/2  - AL2/12        # Calculated luminosity for the i+1 shell
 
-            return L_cal, fL, epsilon, cycle
+            return l_cal, fl, epsilon, cycle
 
 
         # ---------------------------------- Step 7 ---------------------------------- #
 
-        def step7(self, shell, derivatives, r, P, T, L, h):
+        def step7(self, shell, derivatives, r, P, T, l, h):
             """
             Given the variables of the star for a shell, an estimation of radius, pressure,
             temperature and luminosity for the next shell and the derivatives of the current 
@@ -772,7 +782,7 @@ class Star:
             derivative for the next shell. 
             """
 
-            fT = dTdr_rad(self, r, P, T, L)          # fT for the i+1 shell
+            fT = dTdr_rad(self, r, P, T, l)          # fT for the i+1 shell
             AT1 = h * (fT - derivatives[2][1])       # AT1 for the i+1 shell
             T = shell[4]                             # T for the i shell
 
@@ -783,14 +793,14 @@ class Star:
 
         # -------------------------------- Step 7 bis -------------------------------- #
 
-        def step7bis(self, shell, derivatives, r, M, h):
+        def step7bis(self, shell, derivatives, r, m, h):
             """
             Given the variables of the star for a shell, an estimation of radius and mass 
             for the next shell and the derivatives of the current and two previous shells it 
             calculates the value of the temperature and its derivative for the next shell. 
             """
 
-            fT = dTdr_conv(self, r, M)               # fT for the i+1 shell
+            fT = dTdr_conv(self, r, m)               # fT for the i+1 shell
             AT1 = h * (fT - derivatives[2][1])       # AT1 for the i+1 shell
             T = shell[4]                             # T for the i shell
 
@@ -879,18 +889,18 @@ class Star:
             # Calculating and storing the values for the first three shells
             T = initial_surface_T(self, r)
             P = initial_surface_P(self, r, T)
-            M = self.Mtot
-            L = self.Ltot
+            m = self.Mtot
+            l = self.Ltot
             rho = perfect_gas_rho(self, P, T)
             kappa = opacity(self, rho, T)
-            outer_data.append(["--", "START", r, P, T, L, M, rho, 0.0, kappa])
+            outer_data.append(["--", "START", r, P, T, l, m, rho, 0.0, kappa])
 
             # Calculating and storing the derivatives for the first three shells
-            fT = dTdr_rad(self, r, P, T, L)
-            fP = dPdr_rad(self, r, P, T, M)
-            fM = 0.0
-            fL = 0.0
-            outer_derivatives.append([fP, fT, fL, fM])
+            fT = dTdr_rad(self, r, P, T, l)
+            fP = dPdr_rad(self, r, P, T, m)
+            fm = 0.0
+            fl = 0.0
+            outer_derivatives.append([fP, fT, fl, fm])
 
             # Moving forward one step
             r += h
@@ -918,9 +928,9 @@ class Star:
                 while True:     # Third loop
                     
                     # Performing the third step
-                    M_cal, fM = step3(self, shell, derivatives, r, P_est, T_est, shell[6], h)
+                    m_cal, fm = step3(self, shell, derivatives, r, P_est, T_est, shell[6], h)
                     # Performing the fourth step
-                    P_cal, fP = step4(self, shell, derivatives, r, P_est, T_est, M_cal, h)
+                    P_cal, fP = step4(self, shell, derivatives, r, P_est, T_est, m_cal, h)
                     # Performing the fifth step
                     if stepX(self, P_cal, P_est):
                         break   # Third loop break
@@ -928,9 +938,9 @@ class Star:
                         P_est = P_cal
 
                 # Performing the sixth step
-                L_cal, fL, epsilon, cycle = step6(self, shell, derivatives, r, P_cal, T_est, shell[5], h)
+                l_cal, fl, epsilon, cycle = step6(self, shell, derivatives, r, P_cal, T_est, shell[5], h)
                 # Performing the seventh step
-                T_cal, fT = step7(self, shell, derivatives, r, P_cal, T_est, L_cal, h)
+                T_cal, fT = step7(self, shell, derivatives, r, P_cal, T_est, l_cal, h)
                 # Performing the eighth step
                 if stepX(self, T_cal, T_est):
                     break       # Second loop break
@@ -948,8 +958,8 @@ class Star:
                 rho = perfect_gas_rho(self, P_cal, T_cal)
                 kappa = opacity(self, rho, T_cal)
                 # Storing values and derivatives
-                outer_data.append([cycle, fase, r, P_cal, T_cal, L_cal, M_cal, rho, epsilon, kappa])
-                outer_derivatives.append([fP, fT, fL, fM])
+                outer_data.append([cycle, fase, r, P_cal, T_cal, l_cal, m_cal, rho, epsilon, kappa])
+                outer_derivatives.append([fP, fT, fl, fm])
 
                 # Moving forward one step
                 i += 1
@@ -980,18 +990,18 @@ class Star:
             # Calculating and storing the values for the first three shells
             T = initial_center_T(self, r, K)
             P = initial_center_P(self, r, T, K)
-            M = initial_center_M(self, r, self.Tc, K)
-            L, epsilon, _ = initial_center_L(self, r, P, self.Tc, K)
+            m = initial_center_M(self, r, self.Tc, K)
+            l, epsilon, _ = initial_center_L(self, r, P, self.Tc, K)
             rho = perfect_gas_rho(self, P, T)
             kappa = opacity(self, rho, T)
-            inside_data.append(["--", "CENTER", r, P, T, L, M, rho, epsilon, kappa])
+            inside_data.append(["--", "CENTER", r, P, T, l, m, rho, epsilon, kappa])
 
             # Calculating and storing the derivatives for the first three shells
-            fT = dTdr_conv(self, r, M)
-            fP = dPdr_conv(self, r, T, M, K)
-            fM = dMdr_conv(self, r, T, K)
-            fL, _ = dLdr_conv(self, r, P, T, K)
-            inside_derivatives.append([fP, fT, fL, fM])
+            fT = dTdr_conv(self, r, m)
+            fP = dPdr_conv(self, r, T, m, K)
+            fm = dMdr_conv(self, r, T, K)
+            fl, _ = dLdr_conv(self, r, P, T, K)
+            inside_derivatives.append([fP, fT, fl, fm])
 
             # Moving forward one step
             r += h
@@ -1021,12 +1031,9 @@ class Star:
                 # Estimating pressure using the polytrope constant
                 P_est = polytrope(self, K, T_est)
                 # Performing the third step
-                M_cal, fM = step3(self, shell, derivatives, r, P_est, T_est, shell[6], h)
+                m_cal, fm = step3(self, shell, derivatives, r, P_est, T_est, shell[6], h)
                 # Performing the seventh step bis
-                if shell[2] + h < 1e-4:           # Very small values of "r" are considered zero
-                    T_cal = T_est
-                elif shell[2] + h > 0.0:
-                    T_cal, fT = step7bis(self, shell, derivatives, r, M_cal, h)
+                T_cal, fT = step7bis(self, shell, derivatives, r, m_cal, h)
                 # Performing the eighth step
                 if stepX(self, T_cal, T_est):
                     break       # Loop break
@@ -1035,16 +1042,16 @@ class Star:
 
             # Calculating pressure using the polytrope constant
             P_cal = polytrope(self, K, T_cal)
-            # Performing the sixth step
-            L_cal, fL, epsilon, cycle = step6(self, shell, derivatives, r, P_cal, T_cal, shell[5], h)
             # Calculating the derivative of the pressure for the i shell
-            fP = dPdr_conv(self, r, T_cal, M_cal, K)
+            fP = dPdr_conv(self, r, T_cal, m_cal, K)
+            # Performing the sixth step
+            l_cal, fl, epsilon, cycle = step6(self, shell, derivatives, r, P_cal, T_cal, shell[5], h)
             # Computing density and opacity
             rho = perfect_gas_rho(self, P_cal, T_cal)
             kappa = opacity(self, rho, T_cal)
             # Storing values and derivatives
-            inside_data.append([cycle, fase, r, P_cal, T_cal, L_cal, M_cal, rho, epsilon, kappa])
-            inside_derivatives.append([fP, fT, fL, fM])
+            inside_data.append([cycle, fase, r, P_cal, T_cal, l_cal, m_cal, rho, epsilon, kappa])
+            inside_derivatives.append([fP, fT, fl, fm])
 
             # Moving forward one step
             i += 1
@@ -1064,18 +1071,18 @@ class Star:
             # Calculating and storing the values for the first three shells
             T = initial_surface_T(self, r)
             P = np.real(initial_surface_P(self, r, T))    # Since r ~ Rtot, the program crashes if we do not take the real part
-            M = self.Mtot
-            L = self.Ltot
+            m = self.Mtot
+            l = self.Ltot
             rho = perfect_gas_rho(self, P, T)
             kappa = opacity(self, rho, T)
-            outer_data.insert(0, ["--", "^^^^^^", r, P, T, L, M, rho, 0.0, kappa])
+            outer_data.insert(0, ["--", "^^^^^^", r, P, T, l, m, rho, 0.0, kappa])
 
             # Calculating and storing the derivatives for the first three shells
-            fT = dTdr_rad(self, r, P, T, L)
-            fP = dPdr_rad(self, r, P, T, M)
-            fM = 0.0
-            fL = 0.0
-            outer_derivatives.insert(0, [fP, fT, fL, fM])
+            fT = dTdr_rad(self, r, P, T, l)
+            fP = dPdr_rad(self, r, P, T, m)
+            fm = 0.0
+            fl = 0.0
+            outer_derivatives.insert(0, [fP, fT, fl, fm])
 
             # Moving backward one step
             r += h
@@ -1096,7 +1103,7 @@ class Star:
         # model = outer_data[:-1] + list(reversed(inside_data))
 
         # Returning a DataFrame object
-        model = pd.DataFrame(model, columns=["E", "fase", "r", "P", "T", "L", "M", "rho", "epsilon", "kappa"])
+        model = pd.DataFrame(model, columns=["E", "fase", "r", "P", "T", "l", "m", "rho", "epsilon", "kappa"])
         model.index -= n
 
         # Customizing the DataFrame options
