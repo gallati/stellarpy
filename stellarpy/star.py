@@ -70,7 +70,7 @@ class Star:
             * solar_units (bool, default = False): Specifies whether solar units are to be used as input.
         """
         
-        # Mass, radius and luminosity using solar units
+        # Mass, radius, luminosity and temperature using solar units
         if solar_units:
             Msun = 1.9884                                   # 1e33 g
             Rsun = 6.957                                    # 1e10 cm
@@ -78,14 +78,15 @@ class Star:
             self.Mtot = Mtot*Msun                           # Total mass of the star
             self.Rtot = Rtot*Rsun                           # Total radius of the star
             self.Ltot = Ltot*Lsun                           # Total luminosity of the star
-        # Mass, radius and luminosity using model units
+            self.Tc = Tc/1e7                                # Central temperature of the star
+        # Mass, radius, luminosity and temperature using model units
         else:
             self.Mtot = Mtot                                # Total mass of the star
             self.Rtot = Rtot                                # Total radius of the star
             self.Ltot = Ltot                                # Total luminosity of the star
+            self.Tc = Tc                                    # Central temperature of the star
         
         # Defining other parameters
-        self.Tc = Tc                                        # Central temperature of the star
         self.X = X                                          # Fraction of star mass in H
         self.Y = Y                                          # Fraction of star mass in He
         self.Z = 1 - self.X - self.Y                        # Metalicity
@@ -180,7 +181,7 @@ class Star:
     # Defining the error method
     def error(self):
         """
-        Returns total relative error of the numerical calculation of the star-interior model.
+        Returns the percentage of total relative error of the numerical calculation of the star-interior model.
         """
         return self.totalRelativeError
 
@@ -287,7 +288,7 @@ class Star:
             
             plt.axvspan(-1, transition, color="gray", alpha=0.5, label="Convective zone")                               # Marking the convective zone of the star
             plt.axvspan(transition, self.model[x_axis].iloc[0]*1.5, color="gray", alpha=0.1, label="Radiative zone")    # Marking the radiative zone of the star
-            plt.legend(fontsize=16)                                                                                     # Leyend
+            plt.legend(fontsize=15)                                                                                     # Leyend
             plt.grid(which="major", linestyle="-", color = "black", linewidth=0.5, alpha=0.4, visible=True)             # Major grid
             # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True, alpha=0.5)                            # Minor grid
 
@@ -298,7 +299,7 @@ class Star:
                 plt.plot(self.model[x_axis], self.model[variable], color="red", linewidth=2.5, alpha=0.8)
 
                 # Customizing the plots for each figure
-                plt.title(plots.loc[variable]["title"], fontsize=20, weight="bold") # Title
+                # plt.title(plots.loc[variable]["title"], fontsize=20, weight="bold") # Title
                 plt.xlabel(plots.loc[x_axis]["label"], fontsize=18)                 # x axis label
                 plt.ylabel(plots.loc[variable]["label"], fontsize=18)               # y axis label
                 plt.xlim((min(self.model[x_axis]), max(self.model[x_axis])))        # x limits
@@ -311,7 +312,7 @@ class Star:
 
                 plt.axvspan(-1, transition, color="gray", alpha=0.5, label="Convective zone")                               # Marking the convective zone of the star
                 plt.axvspan(transition, self.model[x_axis].iloc[0]*1.5, color="gray", alpha=0.1, label="Radiative zone")    # Marking the radiative zone of the star
-                plt.legend(fontsize=16)                                                                                     # Leyend
+                plt.legend(fontsize=15)                                                                                     # Leyend
                 plt.grid(which="major", linestyle="-", color = "black", linewidth=0.5, alpha=0.4, visible=True)             # Major grid
                 # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True)                                       # Minor grid
 
@@ -373,19 +374,19 @@ class Star:
         plt.fill_between(logT_1_3, logrho_I_III, ylims[1], color="#5c5c5c")         # Relativistic degeneracy
 
         # Adding text to the plot
-        plt.text(0.10, 0.30, "Ideal gas", transform=plt.gca().transAxes, fontsize=14, color="white").set_path_effects([path_effects.withStroke(linewidth=1.7, foreground="black")])
-        plt.text(0.15, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=14, color="white").set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="black")])
-        plt.text(0.20, 0.90, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=14, color="white").set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="black")])
-        plt.text(0.65, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=14, color="white").set_path_effects([path_effects.withStroke(linewidth=1.8, foreground="black")])
+        plt.text(0.07, 0.30, "Ideal gas", transform=plt.gca().transAxes, fontsize=15, color="white").set_path_effects([path_effects.withStroke(linewidth=2, foreground="black")])
+        plt.text(0.12, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=16, color="white").set_path_effects([path_effects.withStroke(linewidth=2, foreground="black")])
+        plt.text(0.12, 0.885, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=15, color="white").set_path_effects([path_effects.withStroke(linewidth=2, foreground="black")])
+        plt.text(0.55, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=17, color="white").set_path_effects([path_effects.withStroke(linewidth=2.3, foreground="black")])
 
         # Graphing the star variables in the diagram
         plt.plot(T, rho, color="black", linewidth=3.5, zorder=1)
         plt.plot(T, rho, color="orange", linewidth=2.5, zorder=1)
-        plt.scatter(T.iloc[len(T)-1], rho.iloc[len(rho)-1], s=200, color="orange", marker="*", edgecolors="black", linewidths=0.6, label="Star center", zorder=2)
-        plt.scatter(T.iloc[0], rho.iloc[0], s=100, color="orange", marker="s", edgecolors="black", linewidths=0.6, label="Star surface", zorder=2)
+        plt.scatter(T.iloc[len(T)-1], rho.iloc[len(rho)-1], s=280, color="orange", marker="*", edgecolors="black", linewidths=0.6, label="Star center", zorder=2)
+        plt.scatter(T.iloc[0], rho.iloc[0], s=120, color="orange", marker="s", edgecolors="black", linewidths=0.6, label="Star surface", zorder=2)
 
         # Adding title and labels. Setting the ticks parameters
-        plt.title("Temperature-Density Diagram", fontsize=20, weight="bold")# Title
+        # plt.title("Temperature-Density Diagram", fontsize=20, weight="bold")# Title
         plt.xlabel("Log [T(K)]", fontsize=18)                               # x axis label
         plt.ylabel("Log [$\\rho$(g cm$^{-3})$]", labelpad=-7.5, fontsize=18)  # y axis label
         plt.tick_params(axis="both", labelsize=16)                          # Numbering size
