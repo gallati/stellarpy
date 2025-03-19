@@ -205,7 +205,7 @@ Altair.error()
 [Output]: 104.11701982066045
 ```
 
-This result can be improved significatibly optimizing our model by using the function `find_minimum` function.
+This result can be improved significatibly optimizing our model by using the function `find_minimum`.
 
 ```sh
 Rmin, Lmin, Tmin, error_min = find_minimum(star=Altair, x0=None)
@@ -227,8 +227,9 @@ Now that the star is well defined, let's plot some cool graphs!
 Altair.visualize(merge=True, figsize=(10, 6))
 ```
 
-![example](images/usage_example1.png) 
-
+<p align="center">
+  <img src="images/usage_example1.png" alt="StarPyLogo" width="450px" height="auto">
+</p>
 
 ## Energy generation rate and opacity
 
@@ -248,15 +249,18 @@ Altair.visualize(which=["kappa", "epsilon"], normalize=False)
 Altair.TDD()
 ```
 
-![example](images/usage_example4.png) 
+<p align="center">
+  <img src="images/usage_example4.png" alt="StarPyLogo" width="450px" height="auto">
+</p>
 
 ## Hertzsprung–Russell Diagram
 
 ```sh
 Altair.HR()
 ```
-
-![example](images/usage_example5.png) 
+<p align="center">
+  <img src="images/usage_example5.png" alt="StarPyLogo" width="400px" height="auto">
+</p>
 
 License
 ----
