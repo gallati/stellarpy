@@ -1,4 +1,4 @@
-from stellarpy.star import Star
+from stellarpy import Star
 from scipy import optimize
 
 def find_minimum(star, x0=None):
@@ -13,6 +13,9 @@ def find_minimum(star, x0=None):
             List containing specific initial parameters required for the minimum search,
             listed as [Rtot, Ltot, Tc] in model units. If no list is provided, current 
             parameters of the Star object will be used.
+    
+    ## Returns:
+        Optimized parameters and total relative error as a list following the order [Rtot, Ltot, Tc, error]
 
     """
 

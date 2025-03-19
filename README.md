@@ -18,7 +18,7 @@ It provides:
 
 # Installation
 
-Using the terminal, clone the repository to your local machine.
+Using the terminal, clone this repository to your local machine.
 
 ```sh
 git clone https://github.com/gallati/stellar-interior-numerical-model
@@ -140,6 +140,8 @@ In order to properly estimate the variables of the star, the unit system adopted
 
 # Optimization functions
 
+StellarPy provides two function to optimize which values better depict the star.
+
 * `error_table`
 
     Table containing the total relative error for total luminosity and total radius variations. Given a Star object, total relative error for variations of Ltot and Rtot is computed. Arguments:
@@ -172,39 +174,89 @@ In order to properly estimate the variables of the star, the unit system adopted
 
         List containing specific initial parameters required for the minimum search, listed as [Rtot, Ltot, Tc] in model units. If no list is provided, current parameters of the Star object will be used.
 
+    Returns:
+
+    Optimized parameters and total relative error as a list following the order `[Rtot, Ltot, Tc, error]`.
+
 # Usage example
 
-Let us compute the value of the stellar-interior variables for a star with the follwing parameters:
+StellarPy provides a Jupyter Notebook file in which an example is followed through. Here are some of the results achieved in that file.
 
-$$M = 2.51 M_\odot \quad R = 1.59 R_\odot \quad L = 19.76 L_\odot \quad T_c = 1.9554\cdot10^7 \text{K}$$
+Let us build a model for the brightest star in the constellation of Aquila, Altair. As total mass and chemical composition, we will consider K. Bouchaud results.
 
-To do so, the `Model` object is initialized as shown.
+$$M = 1.86 M_\odot \quad X=0.710 \quad Y=0.271$$
 
-```sh
-model = Model(Mtot = 5.0, Rtot = 11.0570, Ltot = 75.9213, Tc = 1.9554)
-```
+As initial parameters for the rest of the magnitudes we will consider as follows:
 
-The `get()` method is required to access, for example, the effective temperature $T_{\text{eff}}$ of the star.
+$$R = 1.5\,R_\odot \quad L = 10\,L_\odot \quad T_c = 1.5\cdot10^7\,\text{K}$$
 
-```sh
-T = model.get(variable = 'T')
-Teff = T.iloc[0]
-print(Teff)
-```
-```sh
-[Output] 0.0005125238763055535
-```
-
-Which leads us to the result $T_{\text{eff}}=5125 \text{K}$
-
-For the visualization of variables throughout the star the `visualize()` method is needed.
+This way, the `Star` object is initialized as shown.
 
 ```sh
-model.visualize(x_axis = 'r', which = ["P", "T", "L", "M", "rho"], merge = True)
+Altair = Star(Mtot=1.86, Rtot=1.5, Ltot=10.0, Tc=1.5e7, X=0.710, Y=0.271, solar_units=True)
 ```
 
-![example](images/example.png) 
+In order to quantify how great our initial choice of parameters is, let us invoke the `error` method.
 
+```sh
+Altair.error()
+```
+```sh
+[Output]: 104.11701982066045
+```
+
+This result can be improved significatibly optimizing our model by using the function `find_minimum` function.
+
+```sh
+Rmin, Lmin, Tmin, error_min = find_minimum(star=Altair, x0=None)
+Altair.redefine(Rtot=Rmin, Ltot=Lmin, Tc=Tmin)
+```
+```sh
+[Output]: 
+Minimum found at: 
+   Rtot = 8.6904
+   Ltot = 33.2764
+   Tc   = 1.8971
+Error: 0.0355 %
+```
+Now that the star is well defined, let's plot some cool graphs! 
+
+## Variables throughout the star
+
+```sh
+Altair.visualize(merge=True, figsize=(10, 6))
+```
+
+![example](images/usage_example1.png) 
+
+
+## Energy generation rate and opacity
+
+```sh
+Altair.visualize(which=["kappa", "epsilon"], normalize=False)
+```
+
+<div align="center">
+  <img src="images/usage_example2.png" width="45%">
+  <img src="images/usage_example3.png" width="45.5%">
+</div>
+
+
+## Teperature-Density Diagram
+
+```sh
+Altair.TDD()
+```
+
+![example](images/usage_example4.png) 
+
+## Hertzsprung–Russell Diagram
+
+```sh
+Altair.HR()
+```
+
+![example](images/usage_example5.png) 
 
 License
 ----

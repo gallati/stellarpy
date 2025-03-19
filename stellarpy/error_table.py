@@ -1,4 +1,4 @@
-from stellarpy.star import Star
+from stellarpy import Star
 import matplotlib.pyplot as plt
 from scipy import optimize
 import numpy as np

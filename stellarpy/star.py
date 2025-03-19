@@ -287,8 +287,13 @@ class Star:
             plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (x axis)
             plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (y axis)
             
-            plt.axvspan(-1, transition, color="gray", alpha=0.5, label="Convective zone")                               # Marking the convective zone of the star
-            plt.axvspan(transition, self.model[x_axis].iloc[0]*1.5, color="gray", alpha=0.1, label="Radiative zone")    # Marking the radiative zone of the star
+            if x_axis in ["r", "l", "m", "kappa"]:
+                plt.axvspan(-1, transition, color="gray", alpha=0.5, label="Convective zone")                               # Marking the convective zone of the star
+                plt.axvspan(transition, self.model[x_axis].iloc[0]*1.5, color="gray", alpha=0.1, label="Radiative zone")    # Marking the radiative zone of the star
+            else:
+                plt.axvspan(-1, transition, color="gray", alpha=0.1, label="Radiative zone")                                                # Marking the convective zone of the star
+                plt.axvspan(transition, self.model[x_axis].iloc[len(self.model)-1]*1.5, color="gray", alpha=0.5, label="Convective zone")   # Marking the radiative zone of the star
+
             plt.legend(fontsize=15)                                                                                     # Leyend
             plt.grid(which="major", linestyle="-", color = "black", linewidth=0.5, alpha=0.4, visible=True)             # Major grid
             # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True, alpha=0.5)                            # Minor grid
@@ -311,8 +316,13 @@ class Star:
                 plt.gca().xaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (x axis)
                 plt.gca().yaxis.set_minor_locator(AutoMinorLocator(10))             # Minor ticks (y axis)
 
-                plt.axvspan(-1, transition, color="gray", alpha=0.5, label="Convective zone")                               # Marking the convective zone of the star
-                plt.axvspan(transition, self.model[x_axis].iloc[0]*1.5, color="gray", alpha=0.1, label="Radiative zone")    # Marking the radiative zone of the star
+                if x_axis in ["r", "l", "m", "kappa"]:
+                    plt.axvspan(-1, transition, color="gray", alpha=0.5, label="Convective zone")                               # Marking the convective zone of the star
+                    plt.axvspan(transition, self.model[x_axis].iloc[0]*1.5, color="gray", alpha=0.1, label="Radiative zone")    # Marking the radiative zone of the star
+                else:
+                    plt.axvspan(-1, transition, color="gray", alpha=0.1, label="Radiative zone")                                                # Marking the convective zone of the star
+                    plt.axvspan(transition, self.model[x_axis].iloc[len(self.model)-1]*1.5, color="gray", alpha=0.5, label="Convective zone")   # Marking the radiative zone of the star
+
                 plt.legend(fontsize=15)                                                                                     # Leyend
                 plt.grid(which="major", linestyle="-", color = "black", linewidth=0.5, alpha=0.4, visible=True)             # Major grid
                 # plt.grid(which="minor", linestyle=":", linewidth=0.5, visible=True)                                       # Minor grid
