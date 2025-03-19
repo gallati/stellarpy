@@ -228,7 +228,7 @@ Altair.visualize(merge=True, figsize=(10, 6))
 ```
 
 <p align="center">
-  <img src="images/usage_example1.png" alt="StarPyLogo" width="450px" height="auto">
+  <img src="images/usage_example1.png" alt="StarPyLogo" width="500px" height="auto">
 </p>
 
 ## Energy generation rate and opacity
@@ -250,7 +250,7 @@ Altair.TDD()
 ```
 
 <p align="center">
-  <img src="images/usage_example4.png" alt="StarPyLogo" width="450px" height="auto">
+  <img src="images/usage_example4.png" alt="StarPyLogo" width="500px" height="auto">
 </p>
 
 ## Hertzsprung–Russell Diagram
