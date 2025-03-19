@@ -2,95 +2,131 @@
   <img src="images/StellarPyLogo.png" alt="StarPyLogo" width="300px" height="auto">
 </p>
 
-# Stellar-interior numerical model
+---
 
-#### Python module for solving the stellar-interior equations.
+Python module for solving the stellar-interior equations.
 
  - Author: **Nuno Cerviño Luridiana**
- - Last update: February, 2025
+ - Last update: March, 2025
 
-**Technology:** `Python`, `numerical methods`
+It provides:
+
+* A Star object to model massive stars.
+* Two different functions to optimize modeling.
+* A 351 stars data set for Hertzsprung-Russell diagram representation.
 
 
 # Installation
 
-Clone the repository to your local machine.
+Using the terminal, clone the repository to your local machine.
 
 ```sh
-!git clone https://github.com/gallati/stellar-interior-numerical-model
+git clone https://github.com/gallati/stellar-interior-numerical-model
 ```
 
-Add the module route to Python search.
+Enter the cloned directory and install the package.
 
 ```sh
-import sys
-sys.path.insert(0,'./stellar-interior-numerical-model')
+cd stellarpy/pip install .
 ```
 
-Import the model object.
+Now you can access all StellarPy functionalities!
 
-```sh
-from model import Model
-```
 
-Enjoy!
+# Star class
 
-# Model object usage
-
+Represents a star with a given mass and chemical composition. To preform the stellar-interior numerical calculation, initial values for radius, luminosity and central temperature are required. How ever, StellarPy provides the functions `error_table` and `find_minimum` to optimize which values better depict the star.
 
 ## Initialization
 
-The `Model` object takes the following initial parameters:
+The `Star` object takes the following initial parameters:
 
-- `Mtot` (float, default = 5.0) : total mass of the star.
-- `Rtot` (float, default = 11.5) : total radius of the star.
-- `Ltot` (float, default = 70.0) : total luminosity of the star.
-- `Tc` (float, default = 2.0) : central temperature of the star.
+* `Rtot` (float, default = 11.5): Total radius of the star.
+* `Ltot` (float, default = 70.0): Total luminosity of the star.
+* `Tc` (float, default = 2.0): Central temperature of the star.
+* `X` (float, default = 0.75): Fraction of star mass in H.
+* `Y` (float, default = 0.22): Fraction of mass in He.
+* `solar_units` (bool, default = False): Specifies whether solar units are to be used as input.
 
-Once the object is initialized, it estimates the numerical value of radius, pressure, temperature, mass, luminosity and density throughout a star with the given initial parameters.
+Once the object is initialized, a numerical estimation for radius, pressure, temperature, mass, luminosity, density, energy generation rate and opacity throughout the star is performed.
 
 
 ## Methods
 
-Several built-in methods are provided for the `Model` object.
+Several built-in methods are provided for the `Star` object.
 
-* `get()`
+* `get`
 
-    Function to access variables. Parameters:
+    Returns the requested Star instance data. Arguments:
 
-    * `variable` (string, default = 'all'): 
-    If default ('all'), a Data Frame object is returned containing the calculated values of the variables. For queries on specific variables you must enter one of the following strings: 'r', 'P', 'T', 'L', 'M' and 'rho'
+    * `variable` (string, default = 'all'):
+        If default ('all'), a Data Frame object is returned containing the calculated values of the variables. 
+        For queries on specific variables you must enter one of the following strings: 'r', 'P', 'T', 'l', 'm', 'rho', 'epsilon' or 'kappa'.
 
-* `error()`
+    * `solar_units` (bool, default = False):
+        If True, all data will be given using solar units.
+        If False, all data will be given using the model units.
 
-    Returns total relative error of the numerical calculation of the star-interior model.
 
-* `visualize()`
+* `parameters`
     
-    Function to graph the calculated variables. Parameters:
+    Returns Star instance atributes as a list following the order: [Mtot, Rtot, Ltot, Tc, X, Y]
 
-    * `x_axis` (string, default = 'r'): String to select the independent variable of the plot. It can only be one of the variables calculated with the model: 'r', 'P', 'T', 'L', 'M' and 'rho'.
 
-    * `which` (array-like, default = ['P', 'T', 'L', 'M', 'rho']): Array-like containing the dependent variables desirable to plot in string format. Supports the same values as x_axis: 'r', 'P', 'T', 'L', 'M' and 'rho'.
+* `redefine`
 
-    * `merge` (bool, default = False): If True, it plots all variables specified in 'which' normalized in the same figure. If False, it plots all variables specified in 'which' without normalizing in different figures.
+    Redefines Star instance atributes. Arguments:
 
-    * `solar_units` (bool, default = True): If True, all plots will be graphed using solar units. If False, all plots will be graphed using the model units.
+    * `Mtot` (float, default = 5.0): Total mass of the star.
+    * `Rtot` (float, default = 11.5): Total radius of the star.
+    * `Ltot` (float, default = 70.0): Total luminosity of the star.
+    * `Tc` (float, default = 2.0): Central temperature of the star.
+    * `X` (float, default = 0.75): Fraction of star mass in H.
+    * `Y` (float, default = 0.22): Fraction of mass in He.
 
-    * `figsize` (two-dimensional array-like, default = (10, 7)): Two-dimensional array-like for a better customization on the figures size.
 
-* `TDD()`
+* `error`
 
-    Function to plot the Temperature-Density Diagram, i.e. the values throughout the star for temperature and density. Several regions are distinguished depending on the dominant pressure:
+    Returns the percentage of total relative error of the numerical calculation of the star-interior model.
 
-    I: ideal gas. II: degeneracy. III: relativistic degeneracy. IV: radiation pressure.
 
-    * `figsize` (two-dimensional array-like, default = (10, 7)): Two-dimensional array-like for a better customization on the figures size.
+* `visualize`
+    
+    Graphical representation of the calculated variables throughout the star. Arguments:
+        
+    * `x_axis` (string, default = 'r'): 
+        String to select the independent variable of the plot from the following: 
+        'r', 'P', 'T', 'l', 'm', 'rho', 'epsilon' and 'kappa'.
+
+    * `which` (array-like, default = ['P', 'T', 'l', 'm', 'rho']): 
+        Array-like containing the dependent variables desirable to plot in string format.
+        Supports the same values as x_axis: 'r', 'P', 'T', 'l', 'm', 'rho', 'epsilon' and 'kappa'.
+
+    * `merge` (bool, default = False):
+        If True, all variables specified in 'which' are graphed in the same figure.
+        If False, all variables specified in 'which' are graphed in different figures.
+
+    * `normalize` (bool, default = True):
+        If True, all plots will be graphed using normalized units.
+        If False, all plots will be graphed using a mix between cgs and solar units.
+
+    * `figsize` (two-dimensional array-like, default = (8, 6)):
+        Two-dimensional array-like for a better customization on the figures size.
+
+
+* `TDD`
+
+    Graphical representation of the star variables in the Temperature-Density Diagram. Several regions are distinguished depending on the dominant pressure. I: ideal gas. II: degeneracy. III: relativistic degeneracy. IV: radiation pressure.
+
+
+* `HR`
+
+    Graphical representation of the star in the Hertzsprung–Russell Diagram.
 
 
 ## Units
 
-In order to properly estimate the variables of the star, the unit system adopted for parameter input and results interpretation varies with respect to CGS.
+In order to properly estimate the variables of the star, the unit system adopted for internal calculations of the model varies with respect to CGS. However, both input and output values of the model can be converted to solar units.
 
     radius (r)                         ->   1e10 cm
     pressure (P)                       ->   1e15 dyn cm^-2
@@ -102,7 +138,41 @@ In order to properly estimate the variables of the star, the unit system adopted
     opacity (kappa)                    ->   1 cm^2 g^-1
 
 
-## Usage example
+# Optimization functions
+
+* `error_table`
+
+    Table containing the total relative error for total luminosity and total radius variations. Given a Star object, total relative error for variations of Ltot and Rtot is computed. Arguments:
+
+    * `star` (Star): 
+        Star object for which the minimum must be found.
+
+    * `n` (float):
+        Size of the maximum variation. The output table length will be (2*n+1).
+
+    * `dR` (float, default = 0.5): 
+        Total radius variation.
+
+    * `dL` (float, default = 5.0): 
+        Total luminosity variation.
+    
+    * `numbering` (bool, default = False):
+        Enables table numbering.
+
+
+* `find_minimum`
+    
+    Total relative error minimum finder for Star objects. Arguments:
+
+    * `star` (Star):
+
+        Star object for which the minimum must be found.
+
+    * `x0` (list, default = None): 
+
+        List containing specific initial parameters required for the minimum search, listed as [Rtot, Ltot, Tc] in model units. If no list is provided, current parameters of the Star object will be used.
+
+# Usage example
 
 Let us compute the value of the stellar-interior variables for a star with the follwing parameters:
 

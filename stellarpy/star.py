@@ -16,6 +16,7 @@ from matplotlib.ticker import AutoMinorLocator
 import matplotlib.patheffects as path_effects
 import pandas as pd
 import numpy as np
+import os
 
 class Star:
     """
@@ -299,7 +300,7 @@ class Star:
                 plt.plot(self.model[x_axis], self.model[variable], color="red", linewidth=2.5, alpha=0.8)
 
                 # Customizing the plots for each figure
-                # plt.title(plots.loc[variable]["title"], fontsize=20, weight="bold") # Title
+                plt.title(plots.loc[variable]["title"], fontsize=20, weight="bold") # Title
                 plt.xlabel(plots.loc[x_axis]["label"], fontsize=18)                 # x axis label
                 plt.ylabel(plots.loc[variable]["label"], fontsize=18)               # y axis label
                 plt.xlim((min(self.model[x_axis]), max(self.model[x_axis])))        # x limits
@@ -319,15 +320,11 @@ class Star:
         plt.show()
 
     # Defining the Temperature-Density Diagram method
-    def TDD(self, figsize=(8,6)):
+    def TDD(self):
         """
         Graphical representation of the star variables in the Temperature-Density Diagram. 
         Several regions are distinguished depending on the dominant pressure.
         I: ideal gas. II: degeneracy. III: relativistic degeneracy. IV: radiation pressure.
-
-        ## Arguments:
-            * figsize (two-dimensional array-like, default = (8, 6)):
-                Two-dimensional array-like for a better customization on the figures size.
         """
 
         # Defining fundamental constants and star constants
@@ -341,7 +338,7 @@ class Star:
 
         # Changing font and figure size. Setting the plot limits
         plt.rcParams["font.family"] = "serif"
-        plt.figure(figsize=figsize)
+        plt.figure(figsize=(10,6))
         xlims = [min(T) / 1.1, 10]
         ylims = [min(rho) * 1.1, 10.5]
 
@@ -374,10 +371,14 @@ class Star:
         plt.fill_between(logT_1_3, logrho_I_III, ylims[1], color="#5c5c5c")         # Relativistic degeneracy
 
         # Adding text to the plot
-        plt.text(0.07, 0.30, "Ideal gas", transform=plt.gca().transAxes, fontsize=15, color="white").set_path_effects([path_effects.withStroke(linewidth=2, foreground="black")])
-        plt.text(0.12, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=16, color="white").set_path_effects([path_effects.withStroke(linewidth=2, foreground="black")])
-        plt.text(0.12, 0.885, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=15, color="white").set_path_effects([path_effects.withStroke(linewidth=2, foreground="black")])
-        plt.text(0.55, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=17, color="white").set_path_effects([path_effects.withStroke(linewidth=2.3, foreground="black")])
+        # plt.text(0.07, 0.30, "Ideal gas", transform=plt.gca().transAxes, fontsize=17, color="white").set_path_effects([path_effects.withStroke(linewidth=2, foreground="black")])
+        # plt.text(0.10, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=18, color="white").set_path_effects([path_effects.withStroke(linewidth=2, foreground="black")])
+        # plt.text(0.12, 0.885, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=17, color="white").set_path_effects([path_effects.withStroke(linewidth=2, foreground="black")])
+        # plt.text(0.60, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=19, color="white").set_path_effects([path_effects.withStroke(linewidth=2, foreground="black")])
+        plt.text(0.07, 0.30, "Ideal gas", transform=plt.gca().transAxes, fontsize=20, color="black").set_path_effects([path_effects.withStroke(linewidth=2.5, foreground="white")])
+        plt.text(0.10, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=20, color="white").set_path_effects([path_effects.withStroke(linewidth=2.5, foreground="black")])
+        plt.text(0.18, 0.885, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=20, color="white").set_path_effects([path_effects.withStroke(linewidth=2.5, foreground="black")])
+        plt.text(0.60, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=20, color="black").set_path_effects([path_effects.withStroke(linewidth=2.5, foreground="white")])
 
         # Graphing the star variables in the diagram
         plt.plot(T, rho, color="black", linewidth=3.5, zorder=1)
@@ -386,7 +387,7 @@ class Star:
         plt.scatter(T.iloc[0], rho.iloc[0], s=120, color="orange", marker="s", edgecolors="black", linewidths=0.6, label="Star surface", zorder=2)
 
         # Adding title and labels. Setting the ticks parameters
-        # plt.title("Temperature-Density Diagram", fontsize=20, weight="bold")# Title
+        plt.title("Temperature-Density Diagram", fontsize=20, weight="bold")# Title
         plt.xlabel("Log [T(K)]", fontsize=18)                               # x axis label
         plt.ylabel("Log [$\\rho$(g cm$^{-3})$]", labelpad=-7.5, fontsize=18)  # y axis label
         plt.tick_params(axis="both", labelsize=16)                          # Numbering size
@@ -407,7 +408,9 @@ class Star:
         """
 
         # Loading data
-        stars_data = pd.read_csv("stellarpy/hertzsprung-russell-data.csv")
+        current_directory = os.path.dirname(__file__)
+        data_route = os.path.join(current_directory, "hertzsprung-russell-data.csv")
+        stars_data = pd.read_csv(data_route)
 
         # Customizing the figure
         plt.rcParams["font.family"] = "serif"           # Font
@@ -433,18 +436,19 @@ class Star:
 
         # Customizing the graph
         plt.title("Hertzsprung-Russell Diagram", color="white", weight="bold", fontsize=18)         # Title
-        plt.xlabel("T / K ", color="white", fontsize=16)                                  # x label
-        plt.ylabel("Log (L / L$_{\\!\\odot}$)", color="white", fontsize=16)                              # y label
-        plt.gca().tick_params(which="major", length=9, direction="in", colors="white", labelsize=13)              # Major ticks length and orientation
-        plt.tick_params(axis="x", which="minor", length=4, direction="in", color="white")           # Minor x ticks
-        plt.tick_params(axis="y", which="minor", length=4, direction="in", color="white")           # Minor y ticks
-        plt.xticks(np.log10(np.array([31000, 9850, 5000, 2500, 1000]), dtype=float),                # Major x ticks
+        plt.xlabel("T$_\\text{eff}$ / K ", color="white", fontsize=16)                                              # x label
+        plt.ylabel("Log (L / L$_{\\!\\odot}$)", color="white", fontsize=16)                           # y label
+        plt.gca().tick_params(which="major", length=9, direction="in", colors="white", labelsize=13)  # Major ticks length and orientation
+        plt.tick_params(axis="x", which="minor", length=4, direction="in", color="white")             # Minor x ticks
+        plt.tick_params(axis="y", which="minor", length=4, direction="in", color="white")             # Minor y ticks
+        plt.xticks(np.log10(np.array([31000, 9850, 5000, 2500, 1000]), dtype=float),                  # Major x ticks
             labels=["30,000", "10,000", "5,000", "2,500", "1,000"], color="white")
 
         # Showing the plot
         plt.gca().invert_xaxis()
         plt.minorticks_on()
         plt.legend(fontsize=16)
+
         plt.show()
 
     # Defining the function to calculate 

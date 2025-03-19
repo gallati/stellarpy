@@ -3,23 +3,27 @@ import matplotlib.pyplot as plt
 from scipy import optimize
 import numpy as np
 
-def error_table(star, n, dR=0.5, dL=5.0, numbering=False):
+def error_table(star:Star, n:int, dR=0.5, dL=5.0, numbering=False):
     """
     Table containing the total relative error for total luminosity and total radius variations.
     Given a Star object, total relative error for variations of Ltot and Rtot is computed.
 
     ## Arguments:
-        * n (float): 
-            Size of the maximum variation. The output table length will be (2*n+1).
 
         * star (Star): 
             Star object for which the minimum must be found.
+
+        * n (int): 
+            Size of the maximum variation. The output table length will be (2*n+1).
 
         * dR (float, default = 0.5): 
             Total radius variation.
 
         * dL (float, default = 5.0): 
             Total luminosity variation.
+        
+        * numbering (bool, default = False):
+            Enables table numbering.
     """
 
     # Selecting values from the star
@@ -42,9 +46,9 @@ def error_table(star, n, dR=0.5, dL=5.0, numbering=False):
         for (i, j), value in np.ndenumerate(error_matrix):
             plt.text(j, i, f"{value/100:.2f}", ha="center", va="center", color="black", fontsize=10)
 
-    # plt.title("Summary table", fontsize=20, weight="bold")                                                         # Title
-    plt.xlabel("R$_{total}\\pm\\delta$R", fontsize=18)
-    plt.ylabel("L$_{total}\\pm\\delta$L", fontsize=18)
+    plt.title("Summary table", fontsize=20, weight="bold")                                                         # Title
+    plt.xlabel("R$_\\text{total}\\pm\\delta$R", fontsize=18)
+    plt.ylabel("L$_\\text{total}\\pm\\delta$L", fontsize=18)
     plt.xticks(ticks=range(2*n+1), labels=R, fontsize=14) # Minor ticks (x axis)
     plt.yticks(ticks=range(2*n+1), labels=L, fontsize=14) # Minor ticks (y axis)
 
