@@ -188,7 +188,7 @@ $$M = 1.86 M_\odot \quad X=0.710 \quad Y=0.271$$
 
 As initial parameters for the rest of the magnitudes we will consider as follows:
 
-$$R = 1.5\,R_\odot \quad L = 10\,L_\odot \quad T_c = 1.5\cdot10^7\,\text{K}$$
+$$R = 1.5R_\odot \quad L = 10L_\odot \quad T_c = 1.5\cdot10^7\text{K}$$
 
 This way, the `Star` object is initialized as shown.
 
@@ -239,7 +239,7 @@ Altair.visualize(which=["kappa", "epsilon"], normalize=False)
 
 <div align="center">
   <img src="images/usage_example2.png" width="45%">
-  <img src="images/usage_example3.png" width="45.5%">
+  <img src="images/usage_example3.png" width="45%">
 </div>
 
 
