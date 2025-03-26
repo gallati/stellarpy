@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="stellarpy",
-    version="0.1",
+    version="4.12",
     packages=find_packages(),
     include_package_data=True,
     package_data={"stellarpy": ["hertzsprung-russell-data.csv"]},

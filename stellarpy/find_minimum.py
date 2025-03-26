@@ -15,7 +15,7 @@ def find_minimum(star, x0=None):
             parameters of the Star object will be used.
     
     ## Returns:
-        Optimized parameters and total relative error as a list following the order [Rtot, Ltot, Tc, error]
+        Optimized parameters and total relative error as a list following the order [Rtot, Ltot, Tc, error] using model units.
 
     """
 

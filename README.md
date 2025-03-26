@@ -37,16 +37,16 @@ Now you can access all StellarPy functionalities!
 
 Represents a star with a given mass and chemical composition. To preform the stellar-interior numerical calculation, initial values for radius, luminosity and central temperature are required. How ever, StellarPy provides the functions `error_table` and `find_minimum` to optimize which values better depict the star.
 
-## Initialization
+## Atributes
 
 The `Star` object takes the following initial parameters:
 
-* `Rtot` (float, default = 11.5): Total radius of the star.
-* `Ltot` (float, default = 70.0): Total luminosity of the star.
-* `Tc` (float, default = 2.0): Central temperature of the star.
-* `X` (float, default = 0.75): Fraction of star mass in H.
-* `Y` (float, default = 0.22): Fraction of mass in He.
-* `solar_units` (bool, default = False): Specifies whether solar units are to be used as input.
+* `Mtot` (QuantityLike, default = 5.0): Total mass of the star.
+* `Rtot` (QuantityLike, default = 11.5): Total radius of the star.
+* `Ltot` (QuantityLike, default = 70.0): Total luminosity of the star.
+* `Tc` (QuantityLike, default = 2.0): Central temperature of the star.
+* `X` (QuantityLike, default = 0.75): Fraction of star mass in H.
+* `Y` (QuantityLike, default = 0.22): Fraction of mass in He.
 
 Once the object is initialized, a numerical estimation for radius, pressure, temperature, mass, luminosity, density, energy generation rate and opacity throughout the star is performed.
 
@@ -63,9 +63,8 @@ Several built-in methods are provided for the `Star` object.
         If default ('all'), a Data Frame object is returned containing the calculated values of the variables. 
         For queries on specific variables you must enter one of the following strings: 'r', 'P', 'T', 'l', 'm', 'rho', 'epsilon' or 'kappa'.
 
-    * `solar_units` (bool, default = False):
-        If True, all data will be given using solar units.
-        If False, all data will be given using the model units.
+    * `input_units` (bool, default = True):
+        If True, requested data will be expressed using the same units as those used to initialize the Star instance. If False, model internal units will be used to express the requested data.
 
 
 * `parameters`
@@ -77,12 +76,12 @@ Several built-in methods are provided for the `Star` object.
 
     Redefines Star instance atributes. Arguments:
 
-    * `Mtot` (float, default = 5.0): Total mass of the star.
-    * `Rtot` (float, default = 11.5): Total radius of the star.
-    * `Ltot` (float, default = 70.0): Total luminosity of the star.
-    * `Tc` (float, default = 2.0): Central temperature of the star.
-    * `X` (float, default = 0.75): Fraction of star mass in H.
-    * `Y` (float, default = 0.22): Fraction of mass in He.
+    * `Mtot` (QuantityLike, default = None): Total mass of the star.
+    * `Rtot` (QuantityLike, default = None): Total radius of the star.
+    * `Ltot` (QuantityLike, default = None): Total luminosity of the star.
+    * `Tc` (QuantityLike, default = None): Central temperature of the star.
+    * `X` (QuantityLike, default = None): Fraction of star mass in H.
+    * `Y` (QuantityLike, default = None): Fraction of mass in He.
 
 
 * `error`
@@ -126,7 +125,7 @@ Several built-in methods are provided for the `Star` object.
 
 ## Units
 
-In order to properly estimate the variables of the star, the unit system adopted for internal calculations of the model varies with respect to CGS. However, both input and output values of the model can be converted to solar units.
+In order to properly estimate the variables of the star, the unit system adopted for internal calculations of the model varies with respect to CGS. However, both input and output values of the model can be expressed in any unit system using Quantity objects from astropy.
 
     radius (r)                         ->   1e10 cm
     pressure (P)                       ->   1e15 dyn cm^-2

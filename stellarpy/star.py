@@ -12,6 +12,7 @@
 # variable : cycle  fase  r   P   T   l   m   rho  epsilon  kappa
 
 import matplotlib.pyplot as plt
+from astropy import units as u
 from matplotlib.ticker import AutoMinorLocator
 import matplotlib.patheffects as path_effects
 import pandas as pd
@@ -25,12 +26,12 @@ class Star:
     Represents a star with a given mass, radius, luminosity, central temperature and chemical composition.
 
     ## Atributes:
-        * Mtot (float, default = 5.0): Total mass of the star.
-        * Rtot (float, default = 11.5): Total radius of the star.
-        * Ltot (float, default = 70.0): Total luminosity of the star.
-        * Tc (float, default = 2.0): Central temperature of the star.
-        * X (float, default = 0.75): Fraction of star mass in H.
-        * Y (float, default = 0.22): Fraction of mass in He.
+        * Mtot (QuantityLike, default = 5.0): Total mass of the star.
+        * Rtot (QuantityLike, default = 11.5): Total radius of the star.
+        * Ltot (QuantityLike, default = 70.0): Total luminosity of the star.
+        * Tc (QuantityLike, default = 2.0): Central temperature of the star.
+        * X (QuantityLike, default = 0.75): Fraction of star mass in H.
+        * Y (QuantityLike, default = 0.22): Fraction of mass in He.
 
     ## Methods:
         * get(): Returns the requested Star instance data.
@@ -43,8 +44,8 @@ class Star:
 
     ## Units:
         In order to properly estimate the variables of the star, the unit system adopted for internal calculations 
-        of the model varies with respect to CGS. However, both input and output values of the model can be converted
-        to solar units.
+        of the model varies with respect to CGS. However, both input and output values of the model can be expressed
+        in any unit system using Quantity objects from astropy.
 
         * radius (r)                         ->   1e10 cm
         * pressure (P)                       ->   1e15 dyn cm^-2
@@ -56,54 +57,89 @@ class Star:
         * opacity (kappa)                    ->   1 cm^2 g^-1
     """
 
+    # Defining the model unit system
+    UNIT_SYSTEM = {
+        "radius": 1e10 * u.cm,
+        "temperature": 1e7 * u.K,
+        "mass": 1e33 * u.g,
+        "luminosity": 1e33 * u.erg / u.s
+    }
+
     # Model initializer
-    def __init__(self, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0, X=0.75, Y=0.22, solar_units=False):
+    def __init__(self, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0, X=0.75, Y=0.22):
         """
         Initializes a new instance of Star.
 
         ## Arguments:
-            * Mtot (float, default = 5.0): Total mass of the star.
-            * Rtot (float, default = 11.5): Total radius of the star.
-            * Ltot (float, default = 70.0): Total luminosity of the star.
-            * Tc (float, default = 2.0): Central temperature of the star.
-            * X (float, default = 0.75): Fraction of star mass in H.
-            * Y (float, default = 0.22): Fraction of mass in He.
-            * solar_units (bool, default = False): Specifies whether solar units are to be used as input.
+            * Mtot (QuantityLike, default = 5.0): Total mass of the star.
+            * Rtot (QuantityLike, default = 11.5): Total radius of the star.
+            * Ltot (QuantityLike, default = 70.0): Total luminosity of the star.
+            * Tc (QuantityLike, default = 2.0): Central temperature of the star.
+            * X (QuantityLike, default = 0.75): Fraction of star mass in H.
+            * Y (QuantityLike, default = 0.22): Fraction of mass in He.
         """
-        
-        # Mass, radius, luminosity and temperature using solar units
-        if solar_units:
-            Msun = 1.9884                                   # 1e33 g
-            Rsun = 6.957                                    # 1e10 cm
-            Lsun = 3.842                                    # 1e33 erg s^-1
-            self.Mtot = Mtot*Msun                           # Total mass of the star
-            self.Rtot = Rtot*Rsun                           # Total radius of the star
-            self.Ltot = Ltot*Lsun                           # Total luminosity of the star
-            self.Tc = Tc/1e7                                # Central temperature of the star
-        # Mass, radius, luminosity and temperature using model units
+
+        # Checking if Mtot has units assigned
+        if isinstance(Mtot, u.Quantity):
+            self.massInputUnits = Mtot.unit                              # Storing input units
+            self.Mtot = (Mtot.to(self.UNIT_SYSTEM["mass"])).value        # Changing to model units
         else:
-            self.Mtot = Mtot                                # Total mass of the star
-            self.Rtot = Rtot                                # Total radius of the star
-            self.Ltot = Ltot                                # Total luminosity of the star
-            self.Tc = Tc                                    # Central temperature of the star
+            self.massInputUnits = u.dimensionless_unscaled               # Storing 'empty' input units
+            self.Mtot = Mtot                                             # Preserving model units
+
+        # Checking if Rtot has units assigned
+        if isinstance(Rtot, u.Quantity):
+            self.radiusInputUnits = Rtot.unit                            # Storing input units
+            self.Rtot = (Rtot.to(self.UNIT_SYSTEM["radius"])).value      # Changing to model units
+        else:
+            self.radiusInputUnits = u.dimensionless_unscaled             # Storing 'empty' input units
+            self.Rtot = Rtot                                             # Preserving model units
+
+        # Checking if Ltot has units assigned
+        if isinstance(Ltot, u.Quantity):
+            self.luminosityInputUnits = Ltot.unit                        # Storing input units
+            self.Ltot = (Ltot.to(self.UNIT_SYSTEM["luminosity"])).value  # Changing to model units
+        else:
+            self.luminosityInputUnits = u.dimensionless_unscaled         # Storing 'empty' input units
+            self.Ltot = Ltot                                             # Preserving model units
+
+        # Checking if Tc has units assigned
+        if isinstance(Tc, u.Quantity):
+            self.temperatureInputUnits = Tc.unit                         # Storing input units
+            self.Tc = (Tc.to(self.UNIT_SYSTEM["temperature"])).value     # Changing to model units
+        else:
+            self.temperatureInputUnits = u.dimensionless_unscaled        # Storing 'empty' input units
+            self.Tc = Tc                                                 # Preserving model units
+
+        # Checking if X has units assigned
+        if isinstance(X, u.Quantity):
+            self.X = X.value
+        else:
+            self.X = X
+        
+        # Checking if Y has units assigned
+        if isinstance(Y, u.Quantity):
+            self.Y = Y.value
+        else:
+            self.Y = Y
 
         # Defining other parameters
-        self.X = X                                          # Fraction of star mass in H
-        self.Y = Y                                          # Fraction of star mass in He
         self.Z = 1 - self.X - self.Y                        # Metalicity
         self.mu = 1/(2*self.X + 3*self.Y/4 + self.Z/2)      # Mean molecular weight
 
         # Calculating the model variables
         self.model, self.totalRelativeError = self.__calculate()
 
-    # Defining the print instruction
+    # Defining the __repr__ method
     def __repr__(self):
-        return self.model.__repr__()
+        return f"{self.__class__.__name__} instance. Atributes: < Mtot={self.Mtot!r}, Rtot={self.Rtot!r}, Ltot={self.Ltot!r}, Tc={self.Tc!r}, X={self.X!r}, Y={self.Y!r}; model units >"
+    
+    # Defining the __str__ method
     def __str__(self):
-        return self.model.to_string()
+        return f"{self.__class__.__name__} instance. Atributes: < Mtot={self.Mtot:.4f}, Rtot={self.Rtot:.4f}, Ltot={self.Ltot:.4f}, Tc={self.Tc:.4f}, X={self.X:.4f}, Y={self.Y:.4f}; model units >"
 
     # Defining the get method
-    def get(self, variable="all", solar_units=False):
+    def get(self, variable="all", input_units=True):
         """
         Returns the requested Star instance data.
         
@@ -111,29 +147,27 @@ class Star:
             * variable (string, default = 'all'):
                 If default ('all'), a Data Frame object is returned containing the calculated values of the variables. 
                 For queries on specific variables you must enter one of the following strings: 'r', 'P', 'T', 'l', 'm', 'rho', 'epsilon' or 'kappa'.
-
-            * solar_units (bool, default = False):
-                If True, all data will be given using solar units.
-                If False, all data will be given using the model units.
+            
+            * input_units (bool, default = True):
+                If True, requested data will be expressed using the same units as those used to initialize the Star instance.
+                If False, model internal units will be used to express the requested data.
         """
 
         # Using model data
         modelData = self.model.copy(deep=True)
 
-        # Solar units are used
-        if solar_units:
-            # Defining sun parameters
-            Msun = 1.9884                           # 1e33 g
-            Rsun = 6.957                            # 1e10 cm
-            Lsun = 3.842                            # 1e33 erg s^-1
-            # Redefining model units
-            modelData["r"] = modelData["r"] / Rsun  # cm
-            modelData["P"] = modelData["P"] * 1e15  # dyn cm^-2
-            modelData["T"] = modelData["T"] * 1e7   # K
-            modelData["m"] = modelData["m"] / Msun  # g
-            modelData["l"] = modelData["l"] / Lsun  # erg s^-1
+        # Unsing input units as output 
+        if input_units:
+            if self.massInputUnits != u.dimensionless_unscaled:
+                modelData["m"] = modelData["m"].apply(lambda element: (element*self.UNIT_SYSTEM["mass"]).to(self.massInputUnits).value)
+            if self.radiusInputUnits != u.dimensionless_unscaled:
+                modelData["r"] = modelData["r"].apply(lambda element: (element*self.UNIT_SYSTEM["radius"]).to(self.radiusInputUnits).value)
+            if self.luminosityInputUnits != u.dimensionless_unscaled:
+                modelData["l"] = modelData["l"].apply(lambda element: (element*self.UNIT_SYSTEM["luminosity"]).to(self.luminosityInputUnits).value)
+            if self.temperatureInputUnits != u.dimensionless_unscaled:
+                modelData["T"] = modelData["T"].apply(lambda element: (element*self.UNIT_SYSTEM["temperature"]).to(self.temperatureInputUnits).value)
 
-        # Returning the variables
+        # Returning all variables
         if variable == "all":
             return modelData
         # Returning requested variable
@@ -143,36 +177,73 @@ class Star:
     # Defining the parameters method
     def parameters(self):
         """
-        Returns Star instance atributes as a list following the order: [Mtot, Rtot, Ltot, Tc, X, Y]
+        Returns Star instance atributes using model units as a list following the order: [Mtot, Rtot, Ltot, Tc, X, Y]
         """
         return [self.Mtot, self.Rtot, self.Ltot, self.Tc, self.X, self.Y]
     
     # Defining the redefining method
     def redefine(self, Mtot=None, Rtot=None, Ltot=None, Tc=None, X=None, Y=None):
         """
-        Redefines Star instance atributes.
+        Redefines Star instance atributes. Only given arguments will update.
 
         ## Arguments:
-            * Mtot (float, default = 5.0): Total mass of the star.
-            * Rtot (float, default = 11.5): Total radius of the star.
-            * Ltot (float, default = 70.0): Total luminosity of the star.
-            * Tc (float, default = 2.0): Central temperature of the star.
-            * X (float, default = 0.75): Fraction of star mass in H.
-            * Y (float, default = 0.22): Fraction of mass in He.
+            * Mtot (QuantityLike, default = None): Total mass of the star.
+            * Rtot (QuantityLike, default = None): Total radius of the star.
+            * Ltot (QuantityLike, default = None): Total luminosity of the star.
+            * Tc (QuantityLike, default = None): Central temperature of the star.
+            * X (QuantityLike, default = None): Fraction of star mass in H.
+            * Y (QuantityLike, default = None): Fraction of mass in He.
         """
-        # If no arguments are provided, instance atributes are used
+
         if Mtot is not None:
-            self.Mtot = Mtot
+            # Checking if Mtot has units assigned
+            if isinstance(Mtot, u.Quantity):
+                self.massInputUnits = Mtot.unit                              # Storing input units
+                self.Mtot = (Mtot.to(self.UNIT_SYSTEM["mass"])).value        # Changing to model units
+            else:
+                self.massInputUnits = u.dimensionless_unscaled               # Storing 'empty' input units
+                self.Mtot = Mtot                                             # Preserving model units
+
         if Rtot is not None:
-            self.Rtot = Rtot
+            # Checking if Rtot has units assigned
+            if isinstance(Rtot, u.Quantity):
+                self.radiusInputUnits = Rtot.unit                            # Storing input units
+                self.Rtot = (Rtot.to(self.UNIT_SYSTEM["radius"])).value      # Changing to model units
+            else:
+                self.radiusInputUnits = u.dimensionless_unscaled             # Storing 'empty' input units
+                self.Rtot = Rtot                                             # Preserving model units
+
         if Ltot is not None:
-            self.Ltot = Ltot
+            # Checking if Ltot has units assigned
+            if isinstance(Ltot, u.Quantity):
+                self.luminosityInputUnits = Ltot.unit                        # Storing input units
+                self.Ltot = (Ltot.to(self.UNIT_SYSTEM["luminosity"])).value  # Changing to model units
+            else:
+                self.luminosityInputUnits = u.dimensionless_unscaled         # Storing 'empty' input units
+                self.Ltot = Ltot                                             # Preserving model units
+
         if Tc is not None:
-            self.Tc = Tc
+            # Checking if Tc has units assigned
+            if isinstance(Tc, u.Quantity):
+                self.temperatureInputUnits = Tc.unit                         # Storing input units
+                self.Tc = (Tc.to(self.UNIT_SYSTEM["temperature"])).value     # Changing to model units
+            else:
+                self.temperatureInputUnits = u.dimensionless_unscaled        # Storing 'empty' input units
+                self.Tc = Tc                                                 # Preserving model units
+
         if X is not None:
-            self.X = X
+            # Checking if X has units assigned
+            if isinstance(X, u.Quantity):
+                self.X = X.value
+            else:
+                self.X = X
+
         if Y is not None:
-            self.Y = Y
+            # Checking if Y has units assigned
+            if isinstance(Y, u.Quantity):
+                self.Y = Y.value
+            else:
+                self.Y = Y
         
         # Calculating the model variables
         self.model, self.totalRelativeError = self.__calculate()
@@ -214,7 +285,7 @@ class Star:
         plt.rcParams["font.family"] = "serif"
 
         # Using calculated values
-        modelData = self.get(variable="all")
+        modelData = self.get(variable="all", input_units=False)
 
         # Normalized units are used
         if normalize:
@@ -245,7 +316,7 @@ class Star:
             # Defining sun parameters
             Msun = 1.9884    # 1e33 g
             Rsun = 6.957     # 1e10 cm
-            Lsun = 3.842     # 1e33 erg s^-1
+            Lsun = 3.828     # 1e33 erg s^-1
             # Redefining model units
             modelData["r"] = modelData["r"] / Rsun  # cm
             modelData["P"] = modelData["P"] * 1e15  # dyn cm^-2
@@ -342,8 +413,8 @@ class Star:
         mu_e = 2/(1+self.X)             # Mean molecular electron weight
 
         # Selecting T and rho
-        T = np.log10(self.get("T")*1e7)       # Star log10 temperature in K
-        rho = np.log10(self.get("rho"))       # Star log10 density in g/cm^3
+        T = np.log10(self.get("T", input_units=False)*1e7)       # Star log10 temperature in K
+        rho = np.log10(self.get("rho", input_units=False))       # Star log10 density in g/cm^3
 
         # Changing font and figure size. Setting the plot limits
         plt.rcParams["font.family"] = "serif"
@@ -398,7 +469,7 @@ class Star:
         # Adding title and labels. Setting the ticks parameters
         plt.title("Temperature-Density Diagram", fontsize=20, weight="bold")# Title
         plt.xlabel("Log [T(K)]", fontsize=18)                               # x axis label
-        plt.ylabel("Log [$\\rho$(g cm$^{-3})$]", labelpad=-7.5, fontsize=18)  # y axis label
+        plt.ylabel("Log [$\\rho$(g cm$^{-3})$]", labelpad=-7.5, fontsize=18)# y axis label
         plt.tick_params(axis="both", labelsize=16)                          # Numbering size
         plt.gca().tick_params(direction="in", which="major", length=8)      # Major ticks size and orientation
         plt.gca().tick_params(direction="in", which="minor", length=3)      # Minor ticks size and orientation
@@ -434,7 +505,7 @@ class Star:
                     edgecolors="black", linewidth=0.5)
         
         # Defining Stefan-Boltzmann constant and sun parameters
-        Lsun = 3.842        # 1e33 erg s^-1
+        Lsun = 3.828        # 1e33 erg s^-1
         sigma = 5.67040e-5  # erg cm^-2 s^-1 K^-4
         # Defining log(L) and log(Teff)
         star_L = np.log10( self.Ltot/Lsun )
