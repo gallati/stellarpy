@@ -7,7 +7,7 @@
 Python module for solving the stellar-interior equations.
 
  - Author: **Nuno Cerviño Luridiana**
- - Last update: March, 2025
+ - Last update: April, 2025
 
 It provides:
 
