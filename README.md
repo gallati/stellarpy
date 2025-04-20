@@ -41,12 +41,12 @@ Represents a star with a given mass and chemical composition. To preform the ste
 
 The `Star` object takes the following initial parameters:
 
-* `Mtot` (QuantityLike, default = 5.0): Total mass of the star.
-* `Rtot` (QuantityLike, default = 11.5): Total radius of the star.
-* `Ltot` (QuantityLike, default = 70.0): Total luminosity of the star.
-* `Tc` (QuantityLike, default = 2.0): Central temperature of the star.
-* `X` (QuantityLike, default = 0.75): Fraction of star mass in H.
-* `Y` (QuantityLike, default = 0.22): Fraction of mass in He.
+* `Mtot` (QuantityLike): Total mass of the star.
+* `Rtot` (QuantityLike): Total radius of the star.
+* `Ltot` (QuantityLike): Total luminosity of the star.
+* `Tc` (QuantityLike): Central temperature of the star.
+* `X` (QuantityLike): Fraction of star mass in H.
+* `Y` (QuantityLike): Fraction of mass in He.
 
 Once the object is initialized, a numerical estimation for radius, pressure, temperature, mass, luminosity, density, energy generation rate and opacity throughout the star is performed.
 
@@ -65,6 +65,13 @@ Several built-in methods are provided for the `Star` object.
 
     * `input_units` (bool, default = True):
         If True, requested data will be expressed using the same units as those used to initialize the Star instance. If False, model internal units will be used to express the requested data.
+
+    * `to_csv` (bool, default = False):
+        If True, requested data will be stored in a csv file in the current directory.
+        If False, no csv file will be created.
+
+    * `name` (string, default = None):
+        String containing the name of the csv file, if created.
 
 
 * `parameters`
@@ -125,13 +132,13 @@ Several built-in methods are provided for the `Star` object.
 
 ## Units
 
-In order to properly estimate the variables of the star, the unit system adopted for internal calculations of the model varies with respect to CGS. However, both input and output values of the model can be expressed in any unit system using Quantity objects from astropy.
+In order to properly estimate the variables of the star, the unit system adopted for internal calculations of the model varies with respect to CGS. However, both input and output values of the model can be expressed in any unit system using `Quantity` objects from astropy.
 
     radius (r)                         ->   1e10 cm
     pressure (P)                       ->   1e15 dyn cm^-2
     temperature (T)                    ->   1e7 K
-    mass (M)                           ->   1e33 g
-    luminosity (L)                     ->   1e33 erg s^-1
+    mass (m)                           ->   1e33 g
+    luminosity (l)                     ->   1e33 erg s^-1
     density (rho)                      ->   1 g cm^-3
     energy generation rate (epsilon)   ->   1 erg g^-1 s^-1
     opacity (kappa)                    ->   1 cm^2 g^-1
@@ -148,13 +155,13 @@ StellarPy provides two function to optimize which values better depict the star.
     * `star` (Star): 
         Star object for which the minimum must be found.
 
-    * `n` (float):
+    * `n` (int):
         Size of the maximum variation. The output table length will be (2*n+1).
 
-    * `dR` (float, default = 0.5): 
+    * `dR` (float): 
         Total radius variation.
 
-    * `dL` (float, default = 5.0): 
+    * `dL` (float): 
         Total luminosity variation.
     
     * `numbering` (bool, default = False):
@@ -181,49 +188,49 @@ StellarPy provides two function to optimize which values better depict the star.
 
 StellarPy provides a Jupyter Notebook file in which an example is followed through. Here are some of the results achieved in that file.
 
-Let us build a model for the brightest star in the constellation of Aquila, Altair. As total mass and chemical composition, we will consider K. Bouchaud results.
+Let us build a model for a star with the following mass and chemical composition:
 
-$$M = 1.86 M_\odot \quad X=0.710 \quad Y=0.271$$
+$$M = 5.0\times10^{33}\,\text{g} \quad X=0.80 \quad Y=0.16$$
 
 As initial parameters for the rest of the magnitudes we will consider as follows:
 
-$$R = 1.5R_\odot \quad L = 10L_\odot \quad T_c = 1.5\cdot10^7\text{K}$$
+$$R = 11.5\times10^{10}\,\text{cm} \quad L = 40.0\times10^{33}\,\text{erg}\,\text{s}^{-1} \quad T_c = 1.5\times10^7\,\text{K}$$
 
 This way, the `Star` object is initialized as shown.
 
 ```sh
-Altair = Star(Mtot=1.86, Rtot=1.5, Ltot=10.0, Tc=1.5e7, X=0.710, Y=0.271, solar_units=True)
+star = Star(Mtot=5.0, Rtot=11.5, Ltot=40.0, Tc=1.5, X=0.80, Y=0.16)
 ```
 
 In order to quantify how great our initial choice of parameters is, let us invoke the `error` method.
 
 ```sh
-Altair.error()
+star.error()
 ```
 ```sh
-[Output]: 104.11701982066045
+[Output]: 103.03429829195771
 ```
 
 This result can be improved significatibly optimizing our model by using the function `find_minimum`.
 
 ```sh
-Rmin, Lmin, Tmin, error_min = find_minimum(star=Altair, x0=None)
-Altair.redefine(Rtot=Rmin, Ltot=Lmin, Tc=Tmin)
+Rmin, Lmin, Tmin, error_min = find_minimum(star=star, x0=None)
+star.redefine(Rtot=Rmin, Ltot=Lmin, Tc=Tmin)
 ```
 ```sh
 [Output]: 
-Minimum found at: 
-   Rtot = 8.6904
-   Ltot = 33.2764
-   Tc   = 1.8971
-Error: 0.0355 %
+Minimum found at (model units): 
+   Rtot = 11.2518
+   Ltot = 42.5688
+   Tc   = 1.8569
+Error: 0.0166 %
 ```
 Now that the star is well defined, let's plot some cool graphs! 
 
 ## Variables throughout the star
 
 ```sh
-Altair.visualize(merge=True, figsize=(10, 6))
+star.visualize(merge=True, figsize=(10, 6))
 ```
 
 <p align="center">
@@ -233,7 +240,7 @@ Altair.visualize(merge=True, figsize=(10, 6))
 ## Energy generation rate and opacity
 
 ```sh
-Altair.visualize(which=["kappa", "epsilon"], normalize=False)
+star.visualize(which=["kappa", "epsilon"], normalize=False)
 ```
 
 <div align="center">
@@ -245,7 +252,7 @@ Altair.visualize(which=["kappa", "epsilon"], normalize=False)
 ## Teperature-Density Diagram
 
 ```sh
-Altair.TDD()
+star.TDD()
 ```
 
 <p align="center">
@@ -255,7 +262,7 @@ Altair.TDD()
 ## Hertzsprung–Russell Diagram
 
 ```sh
-Altair.HR()
+star.HR()
 ```
 <p align="center">
   <img src="images/usage_example5.png" alt="StarPyLogo" width="450px" height="auto">

@@ -1,3 +1,10 @@
+# Universidad Complutense de Madrid
+# Facultad de Ciencias Físicas 
+# Course 2024 / 2025
+#
+# Nuno Cerviño Luridiana
+# ncervino@ucm.es 
+
 from stellarpy import Star
 from scipy import optimize
 
@@ -12,7 +19,7 @@ def find_minimum(star, x0=None):
         * x0 (list, default = None): 
             List containing specific initial parameters required for the minimum search,
             listed as [Rtot, Ltot, Tc] in model units. If no list is provided, current 
-            parameters of the Star object will be used.
+            atributes of the Star object will be used.
     
     ## Returns:
         Optimized parameters and total relative error as a list following the order [Rtot, Ltot, Tc, error] using model units.
@@ -31,7 +38,7 @@ def find_minimum(star, x0=None):
 
     # Printing result
     result = optimize.minimize(f, x0=[Rtot, Ltot, Tc])
-    print(f"Minimum found at: \n   Rtot = {result.x[0]:.4f}\n   Ltot = {result.x[1]:.4f}\n   Tc   = {result.x[2]:.4f}")
+    print(f"Minimum found at (model units): \n   Rtot = {result.x[0]:.4f}\n   Ltot = {result.x[1]:.4f}\n   Tc   = {result.x[2]:.4f}")
     print(f"Error: {result.fun:.4f} %")
 
     # Returning result

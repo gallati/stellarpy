@@ -26,12 +26,12 @@ class Star:
     Represents a star with a given mass, radius, luminosity, central temperature and chemical composition.
 
     ## Atributes:
-        * Mtot (QuantityLike, default = 5.0): Total mass of the star.
-        * Rtot (QuantityLike, default = 11.5): Total radius of the star.
-        * Ltot (QuantityLike, default = 70.0): Total luminosity of the star.
-        * Tc (QuantityLike, default = 2.0): Central temperature of the star.
-        * X (QuantityLike, default = 0.75): Fraction of star mass in H.
-        * Y (QuantityLike, default = 0.22): Fraction of mass in He.
+        * Mtot (QuantityLike): Total mass of the star.
+        * Rtot (QuantityLike): Total radius of the star.
+        * Ltot (QuantityLike): Total luminosity of the star.
+        * Tc (QuantityLike): Central temperature of the star.
+        * X (QuantityLike): Fraction of star mass in H.
+        * Y (QuantityLike): Fraction of mass in He.
 
     ## Methods:
         * get(): Returns the requested Star instance data.
@@ -66,17 +66,17 @@ class Star:
     }
 
     # Model initializer
-    def __init__(self, Mtot=5.0, Rtot=11.5, Ltot=70.0, Tc=2.0, X=0.75, Y=0.22):
+    def __init__(self, Mtot, Rtot, Ltot, Tc, X, Y):
         """
         Initializes a new instance of Star.
 
         ## Arguments:
-            * Mtot (QuantityLike, default = 5.0): Total mass of the star.
-            * Rtot (QuantityLike, default = 11.5): Total radius of the star.
-            * Ltot (QuantityLike, default = 70.0): Total luminosity of the star.
-            * Tc (QuantityLike, default = 2.0): Central temperature of the star.
-            * X (QuantityLike, default = 0.75): Fraction of star mass in H.
-            * Y (QuantityLike, default = 0.22): Fraction of mass in He.
+            * Mtot (QuantityLike): Total mass of the star.
+            * Rtot (QuantityLike): Total radius of the star.
+            * Ltot (QuantityLike): Total luminosity of the star.
+            * Tc (QuantityLike): Central temperature of the star.
+            * X (QuantityLike): Fraction of star mass in H.
+            * Y (QuantityLike): Fraction of mass in He.
         """
 
         # Checking if Mtot has units assigned
@@ -139,7 +139,7 @@ class Star:
         return f"{self.__class__.__name__} instance. Atributes: < Mtot={self.Mtot:.4f}, Rtot={self.Rtot:.4f}, Ltot={self.Ltot:.4f}, Tc={self.Tc:.4f}, X={self.X:.4f}, Y={self.Y:.4f}; model units >"
 
     # Defining the get method
-    def get(self, variable="all", input_units=True):
+    def get(self, variable="all", input_units=True, to_csv=False, name=None):
         """
         Returns the requested Star instance data.
         
@@ -151,6 +151,13 @@ class Star:
             * input_units (bool, default = True):
                 If True, requested data will be expressed using the same units as those used to initialize the Star instance.
                 If False, model internal units will be used to express the requested data.
+
+            * to_csv (bool, default = False):
+                If True, requested data will be stored in a csv file in the current directory.
+                If False, no csv file will be created.
+
+            * name (string, default = None):
+                String containing the name of the csv file, if created.
         """
 
         # Using model data
@@ -167,11 +174,19 @@ class Star:
             if self.temperatureInputUnits != u.dimensionless_unscaled:
                 modelData["T"] = modelData["T"].apply(lambda element: (element*self.UNIT_SYSTEM["temperature"]).to(self.temperatureInputUnits).value)
 
+        # Checking if csv file has a name assigned
+        if name is None:
+            name = "stellar-interior-numerical-model"
+
         # Returning all variables
         if variable == "all":
+            if to_csv:
+                modelData.to_csv(f"{name}.csv")
             return modelData
         # Returning requested variable
         else:
+            if to_csv:
+                modelData[variable].to_csv(f"{name}.csv")
             return modelData[variable]
 
     # Defining the parameters method
@@ -300,11 +315,11 @@ class Star:
             modelData["epsilon"] = modelData["epsilon"] / max(modelData["epsilon"])
 
             # Defining titles and labels for each variable 
-            plots = pd.DataFrame(data=[("Radius", "r / R$_{\\!*}$"),
+            plots = pd.DataFrame(data=[("Radius", "r / R$_{\\text{total}}$"),
                                     ("Pressure", "P / P$_\\text{c}$"), 
                                     ("Temperature", "T / T$_\\text{c}$"),
-                                    ("Luminosity", "$\\ell$ / L$_{\\!*}$"),
-                                    ("Mass", "m / M$_{\\!*}$"),
+                                    ("Luminosity", "$\\ell$ / L$_{\\text{total}}$"),
+                                    ("Mass", "m / M$_{\\text{total}}$"),
                                     ("Density", "$\\rho$ / $\\rho_\\text{c}$"),
                                     ("Energy generation rate", "$\\varepsilon$ / $\\varepsilon_{\\text{max}}$"),
                                     ("Opacity", "$\\kappa$ / $\\kappa_{\\text{max}}$")],
@@ -418,7 +433,7 @@ class Star:
 
         # Changing font and figure size. Setting the plot limits
         plt.rcParams["font.family"] = "serif"
-        plt.figure(figsize=(10,6))
+        plt.figure(figsize=(9,7))
         xlims = [min(T) / 1.1, 10]
         ylims = [min(rho) * 1.1, 10.5]
 
@@ -457,8 +472,8 @@ class Star:
         # plt.text(0.60, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=19, color="white").set_path_effects([path_effects.withStroke(linewidth=2, foreground="black")])
         plt.text(0.07, 0.30, "Ideal gas", transform=plt.gca().transAxes, fontsize=20, color="black").set_path_effects([path_effects.withStroke(linewidth=2.5, foreground="white")])
         plt.text(0.10, 0.65, "Degeneracy", transform=plt.gca().transAxes, fontsize=20, color="white").set_path_effects([path_effects.withStroke(linewidth=2.5, foreground="black")])
-        plt.text(0.18, 0.885, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=20, color="white").set_path_effects([path_effects.withStroke(linewidth=2.5, foreground="black")])
-        plt.text(0.60, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=20, color="black").set_path_effects([path_effects.withStroke(linewidth=2.5, foreground="white")])
+        plt.text(0.12, 0.885, "Relativistic degeneracy", transform=plt.gca().transAxes, fontsize=20, color="white").set_path_effects([path_effects.withStroke(linewidth=2.5, foreground="black")])
+        plt.text(0.55, 0.2, "Radiation pressure", transform=plt.gca().transAxes, fontsize=20, color="black").set_path_effects([path_effects.withStroke(linewidth=2.5, foreground="white")])
 
         # Graphing the star variables in the diagram
         plt.plot(T, rho, color="black", linewidth=3.5, zorder=1)
@@ -528,6 +543,9 @@ class Star:
         plt.gca().invert_xaxis()
         plt.minorticks_on()
         plt.legend(fontsize=16)
+
+        # Printing the effective temperature
+        print(f"Effective temperature: Teff = {10**star_Teff:.0f} K.")
 
         plt.show()
 

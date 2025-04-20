@@ -1,9 +1,17 @@
+# Universidad Complutense de Madrid
+# Facultad de Ciencias Físicas 
+# Course 2024 / 2025
+#
+# Nuno Cerviño Luridiana
+# ncervino@ucm.es 
+
 from stellarpy import Star
 import matplotlib.pyplot as plt
+from astropy import units as u
 from scipy import optimize
 import numpy as np
 
-def error_table(star:Star, n:int, dR=0.5, dL=5.0, numbering=False):
+def error_table(star:Star, n:int, dR:float, dL:float, numbering=False):
     """
     Table containing the total relative error for total luminosity and total radius variations.
     Given a Star object, total relative error for variations of Ltot and Rtot is computed.
@@ -16,15 +24,23 @@ def error_table(star:Star, n:int, dR=0.5, dL=5.0, numbering=False):
         * n (int): 
             Size of the maximum variation. The output table length will be (2*n+1).
 
-        * dR (float, default = 0.5): 
+        * dR (float): 
             Total radius variation.
 
-        * dL (float, default = 5.0): 
+        * dL (float): 
             Total luminosity variation.
         
         * numbering (bool, default = False):
             Enables table numbering.
     """
+
+    # Checking if dR has units assigned
+    if isinstance(dR, u.Quantity):
+        dR = (dR.to(1e33 * u.g)).value           # Changing to model units
+
+    # Checking if dL has units assigned
+    if isinstance(dL, u.Quantity):
+        dL = (dL.to(1e33 * u.erg / u.s)).value   # Changing to model units
 
     # Selecting values from the star
     Mtot, Rtot, Ltot, Tc, X, Y = star.parameters()
@@ -59,7 +75,10 @@ def error_table(star:Star, n:int, dR=0.5, dL=5.0, numbering=False):
     min_index = np.unravel_index(np.argmin(error_matrix), error_matrix.shape)
     Lmin, Rmin = L[min_index[0]], R[min_index[1]]
     result = optimize.minimize(lambda x: Star(Mtot=Mtot, Rtot=Rmin, Ltot=Lmin, Tc=x[0], X=X, Y=Y).error(), x0=Tc)
-    print(f"Minimum found at: \n   Rtot = {Rmin:.4f}\n   Ltot = {Lmin:.4f}\n   Tc =   {result.x[0]:.4f}")
+    print(f"Minimum found at (model units): \n   Rtot = {Rmin:.4f}\n   Ltot = {Lmin:.4f}\n   Tc =   {result.x[0]:.4f}")
     print(f"Error: {result.fun:.4f} %")
 
     plt.show()
+
+    # Returning result
+    return Rmin, Lmin, result.x[0], result.fun
