@@ -21,7 +21,7 @@ It provides:
 Using the terminal, clone this repository to your local machine.
 
 ```sh
-git clone https://github.com/gallati/stellar-interior-numerical-model
+git clone https://github.com/gallati/stellarpy
 ```
 
 Enter the cloned directory and install the package.
