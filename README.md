@@ -190,11 +190,11 @@ StellarPy provides a Jupyter Notebook file in which an example is followed throu
 
 Let us build a model for a star with the following mass and chemical composition:
 
-$$M = 5.0\times10^{33}\,\text{g} \quad X=0.80 \quad Y=0.16$$
+$$M = 5.0\times10^{33}\text{g} \quad X=0.80 \quad Y=0.16$$
 
 As initial parameters for the rest of the magnitudes we will consider as follows:
 
-$$R = 11.5\times10^{10}\,\text{cm} \quad L = 40.0\times10^{33}\,\text{erg}\,\text{s}^{-1} \quad T_c = 1.5\times10^7\,\text{K}$$
+$$R = 11.5\times10^{10}\text{cm} \quad L = 40.0\times10^{33}\text{erg}\,\text{s}^{-1} \quad T_c = 1.5\times10^7\text{K}$$
 
 This way, the `Star` object is initialized as shown.
 
