@@ -13,7 +13,7 @@ It provides:
 
 * A Star object to model massive stars.
 * Two different functions to optimize modeling.
-* A 351 stars data set for Hertzsprung-Russell diagram representation.
+* A 351 stars data set for Hertzsprung-Russell diagram representation retrived from [Pecaut M. \& Mamajek J](https://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt) and Kaggle repository [Chen S.](https://www.kaggle.com/code/salmanhiro/hertzsprung-russell-diagram/input).
 
 
 # Installation
