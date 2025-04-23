@@ -271,7 +271,7 @@ star.HR()
 
 ## Data table
 
-Finally, to access stellar-interior data we invoke the get method.
+Finally, to access stellar-interior data using model units we invoke the get method.
 
 ```sh
 star.get()
