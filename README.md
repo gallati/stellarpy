@@ -396,5 +396,4 @@ star.get()
 License
 ----
 
-**Free Software!** 
-For the benefit of everyone.
+This repository is licensed under the MIT License. See the LICENSE file for further details.
