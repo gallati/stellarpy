@@ -11,7 +11,7 @@ from astropy import units as u
 from scipy import optimize
 import numpy as np
 
-def error_table(star:Star, n:int, dR:float, dL:float, numbering=False):
+def error_table(star:Star, n:int, dR, dL, numbering=False):
     """
     Table containing the total relative error for total luminosity and total radius variations.
     Given a Star object, total relative error for variations of Ltot and Rtot is computed.
@@ -24,10 +24,10 @@ def error_table(star:Star, n:int, dR:float, dL:float, numbering=False):
         * n (int): 
             Size of the maximum variation. The output table length will be (2*n+1).
 
-        * dR (float): 
+        * dR (QuantityLike): 
             Total radius variation.
 
-        * dL (float): 
+        * dL (QuantityLike): 
             Total luminosity variation.
         
         * numbering (bool, default = False):

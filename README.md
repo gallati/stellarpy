@@ -7,7 +7,7 @@
 Python module for solving the stellar-interior equations.
 
  - Author: **Nuno Cerviño Luridiana**
- - Last update: April, 2025
+ - Last update: May, 2025
 
 It provides:
 
@@ -158,10 +158,10 @@ StellarPy provides two function to optimize which values better depict the star.
     * `n` (int):
         Size of the maximum variation. The output table length will be (2*n+1).
 
-    * `dR` (float): 
+    * `dR` (QuantityLike): 
         Total radius variation.
 
-    * `dL` (float): 
+    * `dL` (QuantityLike): 
         Total luminosity variation.
     
     * `numbering` (bool, default = False):
