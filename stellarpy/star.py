@@ -584,7 +584,7 @@ class Star:
             Equation (8)
             Both density and temperature are expected in the modified unit system.
             """
-            g_bf = 3.162
+            g_bf = 1/3.162
             return 4.34e25 * g_bf * self.Z * (1+self.X) * rho / ((T*1e7)**3.5)
 
         # Calculating the most efficient energy generation cycle for a given pressure and temperature
